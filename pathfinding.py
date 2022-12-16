@@ -1,6 +1,7 @@
 from tkinter import messagebox, Tk
 import pygame
 import sys
+import random
 import time
 
 
@@ -27,7 +28,7 @@ BLACK = (0, 0, 0)
 PURPLE = (128, 0, 128)
 ORANGE = (255, 165 ,0)
 GREY = (50, 50, 50)
-DARKGREY = (90,90,90)
+DARKGREY = (10,10,10)
 TURQUOISE = (64, 224, 208)
 
 
@@ -100,7 +101,7 @@ def dijkstra(start_cell, target_cell, searching):
             Tk().wm_withdraw()
             messagebox.showinfo("No Solution", "There is no solution")
             searching = False
-            
+
     return searching
             
 
@@ -113,8 +114,101 @@ def bfs():
 def dfs():
     pass
 
-def maze():
-    pass
+def maze(grid):
+    #Make the maze by recursively splitting it into four rooms
+    
+    #Fill in the outside walls
+    create_outside_walls(grid)
+
+    #Start the recursive process
+    make_maze_recursive_call(grid, columns - 1, 0, 0, rows - 1)
+
+def create_outside_walls(grid):
+    #Create outside border walls
+        #Create left and right walls
+        for i in range(len(grid)):
+            (grid[i][0]).wall = True
+            (grid[i][len(grid[i])-1]).wall = True
+
+        #Create top and bottom walls
+        for j in range(1, len(grid[0]) - 1):
+            (grid[0][j]).wall = True
+            (grid[len(grid) - 1][j]).wall = True
+
+def make_maze_recursive_call(grid, top, bottom, left, right):
+    # Figure out where to divide horizontally
+    start_range = bottom + 2
+    end_range = top - 1
+    y = random.randrange(start_range, end_range, 2)
+
+    # Do the division
+    for j in range(left + 1, right):
+        (grid[y][j]).wall = True
+
+    # Figure out where to divide vertically
+    start_range = left + 2
+    end_range = right - 1
+    x = random.randrange(start_range, end_range, 2)
+ 
+     # Do the division
+    for i in range(bottom + 1, top):
+        (grid[i][x]).wall = True
+ 
+     # Now we'll make a gap on 3 of the 4 walls.
+     # Figure out which wall does NOT get a gap.
+    wall = random.randrange(4)
+    if wall != 0:
+        gap = random.randrange(left + 1, x, 2)
+        (grid[y][gap]).blank = True
+        (grid[y][gap]).wall = False
+
+    if wall != 1:
+        gap = random.randrange(x + 1, right, 2)
+        (grid[y][gap]).blank = True
+        (grid[y][gap]).wall = False
+
+    if wall != 2:
+        gap = random.randrange(bottom + 1, y, 2)
+        (grid[gap][x]).blank = True
+        (grid[gap][x]).wall = False
+
+    if wall != 3:
+        gap = random.randrange(y + 1, top, 2)
+        (grid[gap][x]).blank = True
+        (grid[gap][x]).wall = False
+
+     # If there's enough space, to a recursive call.
+    if top > y + 3 and x > left + 3:
+        make_maze_recursive_call(grid, top, y, left, x)
+
+    if top > y + 3 and x + 3 < right:
+        make_maze_recursive_call(grid, top, y, x, right)
+
+    if bottom + 3 < y and x + 3 < right:
+        make_maze_recursive_call(grid, y, bottom, x, right)
+
+    if bottom + 3 < y and x > left + 3:
+        make_maze_recursive_call(grid, y, bottom, left, x)
+    
+def draw_grid():
+    for i in range(columns):
+        for j in range(rows):
+            cell = grid[i][j]
+            cell.draw(window, GREY)
+            if cell.blank:
+                cell.draw(window,GREY)
+            if cell.queued:
+                cell.draw(window, PURPLE)
+            if cell.visited:
+                cell.draw(window, TURQUOISE)
+            if cell in path:
+                cell.draw(window, BLUE)
+            if cell.wall:
+                cell.draw(window, DARKGREY)
+            if cell.start:
+                cell.draw(window, ORANGE)
+            if cell.target:
+                cell.draw(window, RED)
 
 
 
@@ -125,9 +219,11 @@ def main():
     target_cell_set = False
     start_cell = None
     target_cell = None
-
+    set_maze = True
+    maze(grid)
 
     while True:
+
         for event in pygame.event.get():
             #quit window
             if event.type == pygame.QUIT: 
@@ -181,27 +277,10 @@ def main():
             searching = dijkstra(start_cell, target_cell, searching)
 
             
-        
+
         window.fill(BLACK)
 
-        for i in range(columns):
-            for j in range(rows):
-                cell = grid[i][j]
-                cell.draw(window, GREY)
-                if cell.wall:
-                    cell.draw(window, DARKGREY)
-                if cell.blank:
-                    cell.draw(window,GREY)
-                if cell.queued:
-                    cell.draw(window, PURPLE)
-                if cell.visited:
-                    cell.draw(window, TURQUOISE)
-                if cell in path:
-                    cell.draw(window, BLUE)
-                if cell.start:
-                    cell.draw(window, ORANGE)
-                if cell.target:
-                    cell.draw(window, RED)
+        draw_grid()
 
         pygame.display.flip()
 
