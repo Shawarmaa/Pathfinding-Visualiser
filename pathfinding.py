@@ -54,7 +54,7 @@ class Cell:
         self.f, self.g, self.h = 0,0,0
 
     def draw(self, win, colour):
-        pygame.draw.rect(win, colour, (self.x * cell_width, self.y * cell_height, cell_width - 2, cell_height - 2))
+        pygame.draw.rect(win, colour, (self.x * cell_width, self.y * cell_height, cell_width - 2, cell_height - 2))# if the (-2)lines are removed it will look aesthetic in a maze
 
     def set_neighbours(self):
         if self.x > 0:
