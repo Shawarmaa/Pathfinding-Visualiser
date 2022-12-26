@@ -2,7 +2,7 @@ from tkinter import messagebox, Tk
 import pygame
 import sys
 import random
-import time
+import math
 
 
 #settings
@@ -15,7 +15,10 @@ cell_height = window_height // columns
 
 grid = []
 queue = []
+stack = []
 path = []
+
+openSet, closeSet = [], []
 
 pygame.display.set_caption("Pathfinding Visualiser")
 
@@ -43,9 +46,12 @@ class Cell:
         self.target = False
         self.blank = True
         self.queued = False
+        self.stacked = False
         self.visited = False
         self.prior = None
         self.neighbours = []
+
+        self.f, self.g, self.h = 0,0,0
 
     def draw(self, win, colour):
         pygame.draw.rect(win, colour, (self.x * cell_width, self.y * cell_height, cell_width - 2, cell_height - 2))
@@ -53,10 +59,10 @@ class Cell:
     def set_neighbours(self):
         if self.x > 0:
             self.neighbours.append(grid[self.x-1][self.y]) #left
-        if self.x < columns - 1:
-            self.neighbours.append(grid[self.x+1][self.y]) #right
         if self.y > 0:
             self.neighbours.append(grid[self.x][self.y-1]) #down
+        if self.x < columns - 1:
+            self.neighbours.append(grid[self.x+1][self.y]) #right
         if self.y < rows - 1:
             self.neighbours.append(grid[self.x][self.y+1]) #up
         
@@ -79,8 +85,12 @@ def get_mouse_pos():
     
     return x,y
 
+#manhattan distance
+def heuristics(a, b):
+    return math.sqrt((a.x - b.x)**2 + abs(a.y - b.y)**2)
 
-def dijkstra(start_cell, target_cell, searching):
+
+def dijkstra(start_cell, target_cell, searching):#bfs = dijkstras as weight of each edge equals 1
     if len(queue) > 0 and searching:
         current_cell = queue.pop(0)
         current_cell.visited = True
@@ -104,18 +114,112 @@ def dijkstra(start_cell, target_cell, searching):
 
     return searching
             
+def bfs(start_cell, target_cell, searching):
+    if len(queue) > 0 and searching:
+        current_cell = queue.pop(0)
+        current_cell.visited = True
+        if current_cell == target_cell:
+            searching = False
+            # traces its prior cells that it neigboured
+            while current_cell.prior != start_cell: 
+                path.append(current_cell.prior)
+                current_cell = current_cell.prior
+        else:
+            for neighbour in current_cell.neighbours:
+                if not neighbour.queued and not neighbour.wall:
+                    neighbour.queued = True
+                    neighbour.prior = current_cell #stores the prior cell
+                    queue.append(neighbour)
+    else:
+        if searching:
+            Tk().wm_withdraw()
+            messagebox.showinfo("No Solution", "There is no solution")
+            searching = False
 
-def a_star():
-    pass
+    return searching
 
-def bfs():
-    pass
 
-def dfs():
-    pass
+def a_star(start_cell, target_cell, searching):
+    if len(openSet) > 0 and searching:
+        winner = 0
+        for i in range(len(openSet)):
+            if openSet[i].f < openSet[winner].f:
+                winner = i
+
+        current_cell = openSet[winner]
+        current_cell.visited = True
+        openSet.remove(current_cell)
+        
+        if current_cell == target_cell:
+            searching = False
+            # traces its prior cells that it neigboured
+            while current_cell.prior != start_cell: 
+                path.append(current_cell.prior)
+                current_cell = current_cell.prior
+            if not flag:
+                flag = True
+                print("done")
+            elif flag:
+                pass
+
+        else:
+            openSet.remove(current_cell)
+            closeSet.append(current_cell)
+
+            for neighbour in current_cell.neighbours:
+                if neighbour in closeSet or neighbour.wall:
+                    pass
+                tempG = current_cell.g + 1
+
+                newPath = False
+                if neighbour in openSet:
+                    if tempG < neighbour.g:
+                        neighbour.g = tempG
+                        newPath = True
+                else:
+                    neighbour.g = tempG
+                    newPath = True
+                    openSet.append(neighbour)
+                
+                if newPath:
+                    neighbour.h = heuristics(neighbour, target_cell)
+                    neighbour.f = neighbour.g + neighbour.h
+                    neighbour.prior = current_cell
+
+    else:
+            Tk().wm_withdraw()
+            messagebox.showinfo("No Solution", "There was no solution" )
+            searching = False
+
+    return searching
+    
+
+def dfs(start_cell, target_cell, searching):
+    if len(stack) > 0 and searching:
+        current_cell = stack.pop()
+        current_cell.visited = True
+        if current_cell == target_cell:
+            searching = False
+            # traces its prior cells that it neigboured
+            while current_cell.prior != start_cell: 
+                path.append(current_cell.prior)
+                current_cell = current_cell.prior
+        else:
+            for neighbour in current_cell.neighbours:
+                if not neighbour.visited and not neighbour.wall:
+                    neighbour.stacked = True
+                    neighbour.prior = current_cell #stores the prior cell
+                    stack.append(neighbour)
+    else:
+        if searching:
+            Tk().wm_withdraw()
+            messagebox.showinfo("No Solution", "There is no solution")
+            searching = False
+
+    return searching
+    
 
 def maze(grid):
-    #Make the maze by recursively splitting it into four rooms
     
     #Fill in the outside walls
     create_outside_walls(grid)
@@ -136,26 +240,25 @@ def create_outside_walls(grid):
             (grid[len(grid) - 1][j]).wall = True
 
 def make_maze_recursive_call(grid, top, bottom, left, right):
-    # Figure out where to divide horizontally
+    #where to divide horizontally
     start_range = bottom + 2
     end_range = top - 1
     y = random.randrange(start_range, end_range, 2)
 
-    # Do the division
+    #division
     for j in range(left + 1, right):
         (grid[y][j]).wall = True
 
-    # Figure out where to divide vertically
+    #where to divide vertically
     start_range = left + 2
     end_range = right - 1
     x = random.randrange(start_range, end_range, 2)
  
-     # Do the division
+     #division
     for i in range(bottom + 1, top):
         (grid[i][x]).wall = True
  
-     # Now we'll make a gap on 3 of the 4 walls.
-     # Figure out which wall does NOT get a gap.
+     #make a gap on 3 of the 4 walls and which wall does NOT get a gap
     wall = random.randrange(4)
     if wall != 0:
         gap = random.randrange(left + 1, x, 2)
@@ -177,7 +280,7 @@ def make_maze_recursive_call(grid, top, bottom, left, right):
         (grid[gap][x]).blank = True
         (grid[gap][x]).wall = False
 
-     # If there's enough space, to a recursive call.
+     #if there's enough space, to a recursive call
     if top > y + 3 and x > left + 3:
         make_maze_recursive_call(grid, top, y, left, x)
 
@@ -219,8 +322,7 @@ def main():
     target_cell_set = False
     start_cell = None
     target_cell = None
-    set_maze = True
-    maze(grid)
+    #maze(grid)
 
     while True:
 
@@ -241,12 +343,14 @@ def main():
                     start_cell = cell
                     start_cell_set = True
                     cell.blank = False
+                    cell.wall = False
                 #set target
                 elif target_cell_set == False and not cell.start: # not will return True if the expression is False
                     cell.target = True
                     target_cell = cell
                     target_cell_set = True
                     cell.blank = False
+                    cell.wall = False
                 #set wall
                 elif not cell.start and not cell.target:
                     cell.wall = True
@@ -258,9 +362,11 @@ def main():
                 j = y // cell_height
                 cell = grid[i][j]
                 cell.blank = True
+                #remove start
                 if cell.start:
                     cell.start = False
                     start_cell_set = False
+                #remove target
                 elif cell.target:
                     cell.target = False
                     target_cell_set = False
@@ -272,9 +378,15 @@ def main():
                     begin_search = True
                     start_cell.visited = True
                     queue.append(start_cell)
-        
+                    stack.append(start_cell)
+                    openSet.append(start_cell)
+
         if begin_search:
-            searching = dijkstra(start_cell, target_cell, searching)
+            #searching = dijkstra(start_cell, target_cell, searching)
+            searching = bfs(start_cell, target_cell, searching)
+            #searching = dfs(start_cell, target_cell, searching)
+            #searching = a_star(start_cell, target_cell, searching)
+            
 
             
 
