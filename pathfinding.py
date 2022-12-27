@@ -153,40 +153,31 @@ def a_star(start_cell, target_cell, searching):
         if current_cell == target_cell:
             searching = False
             # traces its prior cells that it neigboured
-            while current_cell.prior != start_cell: 
+            while current_cell.prior != start_cell:
                 path.append(current_cell.prior)
                 current_cell = current_cell.prior
-            if not flag:
-                flag = True
-                print("done")
-            elif flag:
-                pass
 
         else:
-            openSet.remove(current_cell)
             closeSet.append(current_cell)
-
             for neighbour in current_cell.neighbours:
-                if neighbour in closeSet or neighbour.wall:
-                    pass
-                tempG = current_cell.g + 1
+                if not neighbour.visited and not neighbour.wall:
+                    tempG = current_cell.g + 1
 
-                newPath = False
-                if neighbour in openSet:
-                    if tempG < neighbour.g:
+                    if neighbour in openSet:
+                        if tempG < neighbour.g:
+                            neighbour.g = tempG
+                    else:
                         neighbour.g = tempG
-                        newPath = True
-                else:
-                    neighbour.g = tempG
-                    newPath = True
-                    openSet.append(neighbour)
-                
-                if newPath:
+                        openSet.append(neighbour)
+                        neighbour.queued = True
+
+                    
                     neighbour.h = heuristics(neighbour, target_cell)
                     neighbour.f = neighbour.g + neighbour.h
                     neighbour.prior = current_cell
 
     else:
+         if searching:
             Tk().wm_withdraw()
             messagebox.showinfo("No Solution", "There was no solution" )
             searching = False
@@ -300,7 +291,7 @@ def draw_grid():
             cell.draw(window, GREY)
             if cell.blank:
                 cell.draw(window,GREY)
-            if cell.queued:
+            if cell.queued or cell.stacked:
                 cell.draw(window, PURPLE)
             if cell.visited:
                 cell.draw(window, TURQUOISE)
@@ -322,7 +313,7 @@ def main():
     target_cell_set = False
     start_cell = None
     target_cell = None
-    #maze(grid)
+    maze(grid)
 
     while True:
 
@@ -383,9 +374,9 @@ def main():
 
         if begin_search:
             #searching = dijkstra(start_cell, target_cell, searching)
-            searching = bfs(start_cell, target_cell, searching)
+            #searching = bfs(start_cell, target_cell, searching)
             #searching = dfs(start_cell, target_cell, searching)
-            #searching = a_star(start_cell, target_cell, searching)
+            searching = a_star(start_cell, target_cell, searching)
             
 
             
