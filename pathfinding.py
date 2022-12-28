@@ -16,10 +16,6 @@ rows, columns = 50, 50
 cell_width = window_width // rows
 cell_height = window_height // columns
 
-
-
-pygame.display.set_caption("Pathfinding Visualiser")
-
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 255, 0)
@@ -303,7 +299,7 @@ def make_maze_recursive_call(grid, top, bottom, left, right):
         (grid[gap][x]).blank = True
         (grid[gap][x]).wall = False
 
-     #if there's enough space, to a recursive call
+     #if there's enough space, do a recursive call
     if top > y + 3 and x > left + 3:
         make_maze_recursive_call(grid, top, y, left, x)
 
@@ -330,7 +326,7 @@ def draw_grid(grid, path):
             if cell in path:
                 cell.draw(window, BLUE)
             if cell.wall:
-                cell.draw(window, DARKGREY)
+                cell.draw(window, BLACK)
             if cell.start:
                 cell.draw(window, ORANGE)
             if cell.target:
@@ -347,22 +343,22 @@ def main():
     target_cell_set = False
     start_cell = None
     target_cell = None
-    run = True
     in_menue = True
     maze_set = False
-
     selected_algorithm = ""
     
    
 
-    while run:
-        #check if game is paused
+    while True:
+        #check if game is in the menue
         if in_menue:
+            pygame.display.set_caption("Menu")
             window.fill(WHITE)
-
-            if maze_button.draw(window) and maze_set == False:
+            #selecting maze
+            if maze_button.draw(window) and maze_set == False and not begin_search:
                 maze(grid)
                 maze_set = True
+            # selecting traversing algorithms
             if a_star_button.draw(window):
                 selected_algorithm = "a*"
                 in_menue = False
@@ -375,11 +371,11 @@ def main():
             if dijkstras_button.draw(window):
                 selected_algorithm = "dijkstras"
                 in_menue = False
-                
         else:
+            pygame.display.set_caption("Pathfinding Visualiser")
             window.fill(BLACK)
             draw_grid(grid, path)
-
+            #starts the visualisation
             if run_button.draw(window) and target_cell_set == True and start_cell_set == True:
                 begin_search = True
                 searching = True
@@ -391,8 +387,20 @@ def main():
                 queue.append(start_cell)
                 stack.append(start_cell)
                 openSet.append(start_cell)
-
+            #clears the grid
             if clear_button.draw(window):
+                begin_search = False
+                start_cell_set = False
+                target_cell_set = False
+                start_cell = None
+                target_cell = None
+                maze_set = False
+                grid = make_grid()
+                set_neighbours(grid)
+            #switches to the menue
+            if escape_button.draw(window):
+                in_menue = True
+                begin_search = False
                 start_cell_set = False
                 target_cell_set = False
                 start_cell = None
@@ -401,10 +409,6 @@ def main():
                 grid = make_grid()
                 set_neighbours(grid)
 
-            if escape_button.draw(window):
-                in_menue = True
-                time.sleep(1)
-            
         #event handler
         for event in pygame.event.get():
             #quit window
@@ -455,7 +459,7 @@ def main():
             #check states
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    in_menue = False
+                    in_menue = True
 
         #check algos
         if begin_search:
@@ -468,8 +472,6 @@ def main():
             if selected_algorithm == "dfs":
                 searching = dfs(start_cell, target_cell, searching, stack, path)
             
-            
-        
             
         pygame.display.flip()
 
