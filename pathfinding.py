@@ -4,6 +4,7 @@ import button
 import sys
 import random
 import math
+import time
 
 pygame.init()
 
@@ -15,11 +16,7 @@ rows, columns = 50, 50
 cell_width = window_width // rows
 cell_height = window_height // columns
 
-grid = []
-queue = []
-stack = []
-path = []
-openSet, closeSet = [], []
+
 
 pygame.display.set_caption("Pathfinding Visualiser")
 
@@ -37,11 +34,6 @@ TURQUOISE = (64, 224, 208)
 
 window = pygame.display.set_mode((window_width,window_height))
 
-#state variable
-in_menue = False
-
-#define fonts
-font = pygame.font.SysFont("arialblack", 40)
 
 #game buttons(left click, right click, run,clear, [?]/ESC)
 run_img = pygame.image.load("images/run.png").convert_alpha()
@@ -49,12 +41,26 @@ clear_img = pygame.image.load("images/clear.png").convert_alpha()
 escape_img = pygame.image.load("images/escape.png").convert_alpha()
 
 #menue buttons(maze, slow, fast, bfs, dfs, dijkstras, A*)
+maze_img = pygame.image.load("images/maze.png").convert_alpha()
+bfs_img = pygame.image.load("images/button_bfs.png").convert_alpha()
+dfs_img = pygame.image.load("images/button_dfs.png").convert_alpha()
+dijkstras_img = pygame.image.load("images/button_dijkstras.png").convert_alpha()
+a_star_img = pygame.image.load("images/button_a.png").convert_alpha()
+fast_img = pygame.image.load("images/button_fast.png").convert_alpha()
+slow_img = pygame.image.load("images/button_slow.png").convert_alpha()
+
 
 #create button instances
 run_button = button.Button(0, 0, run_img, 0.1)
 clear_button = button.Button(0, 50, clear_img, 0.1)
 escape_button = button.Button(0, 100, escape_img, 0.1)
-
+maze_button = button.Button(0, 150, maze_img, 0.1)
+bfs_button = button.Button(0, 200, bfs_img, 0.5)
+dfs_button = button.Button(0, 250, dfs_img, 0.5)
+dijkstras_button = button.Button(0, 300, dijkstras_img, 0.5)
+a_star_button = button.Button(0, 350, a_star_img, 0.5)
+fast_button = button.Button(0, 400, fast_img, 0.5)
+slow_button = button.Button(0, 450, slow_img, 0.5)
 
 
 class Cell:
@@ -76,7 +82,7 @@ class Cell:
     def draw(self, win, colour):
         pygame.draw.rect(win, colour, (self.x * cell_width, self.y * cell_height, cell_width - 2, cell_height - 2))# if the (-2)lines are removed it will look aesthetic in a maze
 
-    def set_neighbours(self):
+    def set_neighbours(self, grid):
         if self.x > 0:
             self.neighbours.append(grid[self.x-1][self.y]) #left
         if self.y > 0:
@@ -86,18 +92,22 @@ class Cell:
         if self.y < rows - 1:
             self.neighbours.append(grid[self.x][self.y+1]) #up
         
-
 #Create grid
-for i in range(columns): 
-    arr = []
-    for j in range(rows):
-        arr.append(Cell(i,j))
-    grid.append(arr)
+def make_grid():
+    grid = []
+    for i in range(columns): 
+        arr = []
+        for j in range(rows):
+            arr.append(Cell(i,j))
+        grid.append(arr)
+    return grid
+
 
 #Set Neighbours
-for i in range(columns):
-    for j in range(rows):
-        grid[i][j].set_neighbours()
+def set_neighbours(grid):
+    for i in range(columns):
+        for j in range(rows):
+            grid[i][j].set_neighbours(grid)
 
 def get_mouse_pos():
     x = pygame.mouse.get_pos()[0]
@@ -110,8 +120,9 @@ def heuristics(a, b):
     return math.sqrt((a.x - b.x)**2 + abs(a.y - b.y)**2)
 
 
-def dijkstra(start_cell, target_cell, searching):#bfs = dijkstras as weight of each edge equals 1
+def dijkstra(start_cell, target_cell, searching, queue, path):#bfs = dijkstras as weight of each edge equals 1
     if len(queue) > 0 and searching:
+        #queue.append(start_cell)
         current_cell = queue.pop(0)
         current_cell.visited = True
         if current_cell == target_cell:
@@ -134,7 +145,7 @@ def dijkstra(start_cell, target_cell, searching):#bfs = dijkstras as weight of e
 
     return searching
             
-def bfs(start_cell, target_cell, searching):
+def bfs(start_cell, target_cell, searching, queue, path):
     if len(queue) > 0 and searching:
         current_cell = queue.pop(0)
         current_cell.visited = True
@@ -159,7 +170,8 @@ def bfs(start_cell, target_cell, searching):
     return searching
 
 
-def a_star(start_cell, target_cell, searching):
+def a_star(start_cell, target_cell, searching, openSet, closeSet, path):
+
     if len(openSet) > 0 and searching:
         winner = 0
         for i in range(len(openSet)):
@@ -205,7 +217,7 @@ def a_star(start_cell, target_cell, searching):
     return searching
     
 
-def dfs(start_cell, target_cell, searching):
+def dfs(start_cell, target_cell, searching, stack, path):
     if len(stack) > 0 and searching:
         current_cell = stack.pop()
         current_cell.visited = True
@@ -304,7 +316,7 @@ def make_maze_recursive_call(grid, top, bottom, left, right):
     if bottom + 3 < y and x > left + 3:
         make_maze_recursive_call(grid, y, bottom, left, x)
     
-def draw_grid():
+def draw_grid(grid, path):
     for i in range(columns):
         for j in range(rows):
             cell = grid[i][j]
@@ -325,34 +337,73 @@ def draw_grid():
                 cell.draw(window, RED)
 
 
-
 def main():
+    grid = make_grid()
+    set_neighbours(grid)
+    path = []
     begin_search = False
     searching = True
     start_cell_set = False
     target_cell_set = False
     start_cell = None
     target_cell = None
-    #maze(grid)
     run = True
-    in_menue = False
+    in_menue = True
+    maze_set = False
 
+    selected_algorithm = ""
+    
+   
 
     while run:
-        
-
         #check if game is paused
-        if in_menue == True:
+        if in_menue:
             window.fill(WHITE)
+
+            if maze_button.draw(window) and maze_set == False:
+                maze(grid)
+                maze_set = True
+            if a_star_button.draw(window):
+                selected_algorithm = "a*"
+                in_menue = False
+            if bfs_button.draw(window):
+                selected_algorithm = "bfs"
+                in_menue = False
+            if dfs_button.draw(window):
+                selected_algorithm = "dfs"
+                in_menue = False
+            if dijkstras_button.draw(window):
+                selected_algorithm = "dijkstras"
+                in_menue = False
+                
         else:
             window.fill(BLACK)
-            draw_grid()
+            draw_grid(grid, path)
+
+            if run_button.draw(window) and target_cell_set == True and start_cell_set == True:
+                begin_search = True
+                searching = True
+                start_cell.visited = True
+                queue = []
+                stack = []
+                path = []
+                openSet, closeSet = [], []
+                queue.append(start_cell)
+                stack.append(start_cell)
+                openSet.append(start_cell)
+
+            if clear_button.draw(window):
+                start_cell_set = False
+                target_cell_set = False
+                start_cell = None
+                target_cell = None
+                maze_set = False
+                grid = make_grid()
+                set_neighbours(grid)
+
             if escape_button.draw(window):
-                in_menue = True 
-            if escape_button.draw(window):
-                in_menue = True 
-            if escape_button.draw(window):
-                in_menue = True 
+                in_menue = True
+                time.sleep(1)
             
         #event handler
         for event in pygame.event.get():
@@ -404,28 +455,22 @@ def main():
             #check states
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    in_menue = True
+                    in_menue = False
 
-
-                if event.key == pygame.K_SPACE and target_cell_set == True and start_cell_set == True and in_menue == False:
-                    begin_search = True
-                    start_cell.visited = True
-                    queue.append(start_cell)
-                    stack.append(start_cell)
-                    openSet.append(start_cell)
-
+        #check algos
         if begin_search:
-            #searching = dijkstra(start_cell, target_cell, searching)
-            #searching = bfs(start_cell, target_cell, searching)
-            #searching = dfs(start_cell, target_cell, searching)
-            searching = a_star(start_cell, target_cell, searching)
+            if selected_algorithm == "a*":
+                searching = a_star(start_cell, target_cell, searching, openSet, closeSet, path)
+            if selected_algorithm == "dijkstras":
+                searching = dijkstra(start_cell, target_cell, searching, queue, path)
+            if selected_algorithm == "bfs":
+                searching = bfs(start_cell, target_cell, searching, queue, path)
+            if selected_algorithm == "dfs":
+                searching = dfs(start_cell, target_cell, searching, stack, path)
             
-
             
-
-
         
-
+            
         pygame.display.flip()
 
 main()
