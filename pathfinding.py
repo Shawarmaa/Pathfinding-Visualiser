@@ -4,6 +4,7 @@ import sys
 import random
 import math
 
+pygame.init()
 
 #settings
 window_width, window_height = 800, 800
@@ -17,7 +18,6 @@ grid = []
 queue = []
 stack = []
 path = []
-
 openSet, closeSet = [], []
 
 pygame.display.set_caption("Pathfinding Visualiser")
@@ -34,8 +34,19 @@ GREY = (50, 50, 50)
 DARKGREY = (10,10,10)
 TURQUOISE = (64, 224, 208)
 
-
 window = pygame.display.set_mode((window_width,window_height))
+
+#state variables
+menu_state = "settings"
+in_settings = False
+
+#define fonts
+font = pygame.font.SysFont("arialblack", 40)
+
+#game buttons(left click, right click, run,clear, [?]/ESC)
+
+#menue buttons(maze, slow, fast, bfs, dfs, dijkstras, A*)
+
 
 class Cell:
     def __init__(self, i, j):
@@ -342,15 +353,16 @@ def main():
     start_cell = None
     target_cell = None
     maze(grid)
+    run = True
 
-    while True:
+    while run:
 
         for event in pygame.event.get():
             #quit window
             if event.type == pygame.QUIT: 
                 pygame.quit()
                 sys.exit()
-            #mouse controls
+            #set nodes
             if pygame.mouse.get_pressed()[0]:
                 x, y= get_mouse_pos()
                 i = x // cell_width
@@ -391,8 +403,12 @@ def main():
                     target_cell_set = False
                 cell.wall = False
 
-            #start algorithms
+            #check states
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    in_settings = True
+                    
+
                 if event.key == pygame.K_SPACE and target_cell_set == True and start_cell_set == True:
                     begin_search = True
                     start_cell.visited = True
