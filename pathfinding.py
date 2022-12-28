@@ -1,5 +1,6 @@
 from tkinter import messagebox, Tk
 import pygame
+import button
 import sys
 import random
 import math
@@ -36,16 +37,24 @@ TURQUOISE = (64, 224, 208)
 
 window = pygame.display.set_mode((window_width,window_height))
 
-#state variables
-menu_state = "settings"
-in_settings = False
+#state variable
+in_menue = False
 
 #define fonts
 font = pygame.font.SysFont("arialblack", 40)
 
 #game buttons(left click, right click, run,clear, [?]/ESC)
+run_img = pygame.image.load("images/run.png").convert_alpha()
+clear_img = pygame.image.load("images/clear.png").convert_alpha()
+escape_img = pygame.image.load("images/escape.png").convert_alpha()
 
 #menue buttons(maze, slow, fast, bfs, dfs, dijkstras, A*)
+
+#create button instances
+run_button = button.Button(0, 0, run_img, 0.1)
+clear_button = button.Button(0, 50, clear_img, 0.1)
+escape_button = button.Button(0, 100, escape_img, 0.1)
+
 
 
 class Cell:
@@ -77,34 +86,6 @@ class Cell:
         if self.y < rows - 1:
             self.neighbours.append(grid[self.x][self.y+1]) #up
         
-class Button():
-	def __init__(self, x, y, image, scale):
-		width = image.get_width()
-		height = image.get_height()
-		self.image = pygame.transform.scale(image, (int(width * scale), int(height * scale)))
-		self.rect = self.image.get_rect()
-		self.rect.topleft = (x, y)
-		self.clicked = False
-
-	def draw(self, surface):
-		action = False
-		#get mouse position
-		pos = pygame.mouse.get_pos()
-
-		#check mouseover and clicked conditions
-		if self.rect.collidepoint(pos):
-			if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
-				self.clicked = True
-				action = True
-
-		if pygame.mouse.get_pressed()[0] == 0:
-			self.clicked = False
-
-		#draw button on screen
-		surface.blit(self.image, (self.rect.x, self.rect.y))
-
-		return action
-
 
 #Create grid
 for i in range(columns): 
@@ -352,18 +333,35 @@ def main():
     target_cell_set = False
     start_cell = None
     target_cell = None
-    maze(grid)
+    #maze(grid)
     run = True
+    in_menue = False
+
 
     while run:
+        
 
+        #check if game is paused
+        if in_menue == True:
+            window.fill(WHITE)
+        else:
+            window.fill(BLACK)
+            draw_grid()
+            if escape_button.draw(window):
+                in_menue = True 
+            if escape_button.draw(window):
+                in_menue = True 
+            if escape_button.draw(window):
+                in_menue = True 
+            
+        #event handler
         for event in pygame.event.get():
             #quit window
             if event.type == pygame.QUIT: 
                 pygame.quit()
                 sys.exit()
             #set nodes
-            if pygame.mouse.get_pressed()[0]:
+            if pygame.mouse.get_pressed()[0] and in_menue == False:
                 x, y= get_mouse_pos()
                 i = x // cell_width
                 j = y // cell_height
@@ -387,7 +385,7 @@ def main():
                     cell.wall = True
                     cell.blank = False
             #remove nodes
-            elif pygame.mouse.get_pressed()[2]:
+            elif pygame.mouse.get_pressed()[2] and in_menue == False:
                 x, y= get_mouse_pos()
                 i = x // cell_width
                 j = y // cell_height
@@ -406,10 +404,10 @@ def main():
             #check states
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    in_settings = True
-                    
+                    in_menue = True
 
-                if event.key == pygame.K_SPACE and target_cell_set == True and start_cell_set == True:
+
+                if event.key == pygame.K_SPACE and target_cell_set == True and start_cell_set == True and in_menue == False:
                     begin_search = True
                     start_cell.visited = True
                     queue.append(start_cell)
@@ -425,9 +423,8 @@ def main():
 
             
 
-        window.fill(BLACK)
 
-        draw_grid()
+        
 
         pygame.display.flip()
 
