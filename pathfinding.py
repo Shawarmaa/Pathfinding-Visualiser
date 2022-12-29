@@ -11,6 +11,10 @@ pygame.init()
 #settings
 window_width, window_height = 800, 800
 
+window_center = window_width/2
+
+button_gap = 10
+
 rows, columns = 50, 50
 
 cell_width = window_width // rows
@@ -44,19 +48,21 @@ dijkstras_img = pygame.image.load("images/button_dijkstras.png").convert_alpha()
 a_star_img = pygame.image.load("images/button_a.png").convert_alpha()
 fast_img = pygame.image.load("images/button_fast.png").convert_alpha()
 slow_img = pygame.image.load("images/button_slow.png").convert_alpha()
+resume_img = pygame.image.load("images/button_resume.png").convert_alpha()
 
 
 #create button instances
-run_button = button.Button(0, 0, run_img, 0.1)
-clear_button = button.Button(0, 50, clear_img, 0.1)
-escape_button = button.Button(0, 100, escape_img, 0.1)
-maze_button = button.Button(0, 150, maze_img, 0.1)
-bfs_button = button.Button(0, 200, bfs_img, 0.5)
-dfs_button = button.Button(0, 250, dfs_img, 0.5)
-dijkstras_button = button.Button(0, 300, dijkstras_img, 0.5)
-a_star_button = button.Button(0, 350, a_star_img, 0.5)
-fast_button = button.Button(0, 400, fast_img, 0.5)
-slow_button = button.Button(0, 450, slow_img, 0.5)
+escape_button = button.Button(0, 0, escape_img, 1)
+clear_button = button.Button(0, 50, clear_img, 1)
+run_button = button.Button(0, 100, run_img, 1)
+maze_button = button.Button(window_center -150/2 , window_center - 100, maze_img, 1)
+bfs_button = button.Button(window_center + button_gap*2 + 150, window_center, bfs_img, 1)
+dfs_button = button.Button(window_center -300 - button_gap*2, window_center, dfs_img, 1)
+dijkstras_button = button.Button(window_center -150 - button_gap, window_center, dijkstras_img, 1)
+a_star_button = button.Button(window_center + button_gap, window_center, a_star_img, 1)
+fast_button = button.Button(window_center -150 - button_gap, window_center+100, fast_img, 1)
+slow_button = button.Button(window_center + button_gap , window_center+ 100, slow_img, 1)
+resume_button = button.Button(window_center -150/2 , window_center+ 200, resume_img, 1)
 
 
 class Cell:
@@ -354,7 +360,7 @@ def main():
         #check if game is in the menue
         if in_menue:
             pygame.display.set_caption("Menu")
-            window.fill(WHITE)
+            window.fill(DARKGREY)
             #selecting maze
             if maze_button.draw(window) and maze_set == False and not begin_search:
                 maze(grid)
@@ -362,21 +368,19 @@ def main():
             # selecting traversing algorithms
             if a_star_button.draw(window):
                 selected_algorithm = "a*"
-                in_menue = False
             if bfs_button.draw(window):
                 selected_algorithm = "bfs"
-                in_menue = False
             if dfs_button.draw(window):
                 selected_algorithm = "dfs"
-                in_menue = False
             if dijkstras_button.draw(window):
                 selected_algorithm = "dijkstras"
-                in_menue = False
             #selecting traversing speed
             if slow_button.draw(window):
                 set_slow = True
             if fast_button.draw(window):
                 set_slow = False
+            if resume_button.draw(window):
+                in_menue = False
         else:
             pygame.display.set_caption("Pathfinding Visualiser")
             window.fill(BLACK)
@@ -422,7 +426,7 @@ def main():
                 pygame.quit()
                 sys.exit()
             #set nodes
-            if pygame.mouse.get_pressed()[0] and in_menue == False:
+            if pygame.mouse.get_pressed()[0] and in_menue == False and begin_search == False:
                 x, y= get_mouse_pos()
                 i = x // cell_width
                 j = y // cell_height
@@ -446,7 +450,7 @@ def main():
                     cell.wall = True
                     cell.blank = False
             #remove nodes
-            elif pygame.mouse.get_pressed()[2] and in_menue == False:
+            elif pygame.mouse.get_pressed()[2] and in_menue == False and begin_search == False:
                 x, y= get_mouse_pos()
                 i = x // cell_width
                 j = y // cell_height
