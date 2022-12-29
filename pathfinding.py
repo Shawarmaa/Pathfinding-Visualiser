@@ -1,6 +1,5 @@
 from tkinter import messagebox, Tk
 import pygame
-import button
 import sys
 import random
 import math
@@ -50,21 +49,7 @@ fast_img = pygame.image.load("images/button_fast.png").convert_alpha()
 slow_img = pygame.image.load("images/button_slow.png").convert_alpha()
 resume_img = pygame.image.load("images/button_resume.png").convert_alpha()
 
-
-#create button instances
-escape_button = button.Button(0, 0, escape_img, 1)
-clear_button = button.Button(0, 50, clear_img, 1)
-run_button = button.Button(0, 100, run_img, 1)
-maze_button = button.Button(window_center -150/2 , window_center - 100, maze_img, 1)
-bfs_button = button.Button(window_center + button_gap*2 + 150, window_center, bfs_img, 1)
-dfs_button = button.Button(window_center -300 - button_gap*2, window_center, dfs_img, 1)
-dijkstras_button = button.Button(window_center -150 - button_gap, window_center, dijkstras_img, 1)
-a_star_button = button.Button(window_center + button_gap, window_center, a_star_img, 1)
-fast_button = button.Button(window_center -150 - button_gap, window_center+100, fast_img, 1)
-slow_button = button.Button(window_center + button_gap , window_center+ 100, slow_img, 1)
-resume_button = button.Button(window_center -150/2 , window_center+ 200, resume_img, 1)
-
-
+#classes
 class Cell:
     def __init__(self, i, j):
         self.x = i
@@ -93,6 +78,34 @@ class Cell:
             self.neighbours.append(grid[self.x+1][self.y]) #right
         if self.y < rows - 1:
             self.neighbours.append(grid[self.x][self.y+1]) #up
+
+class Button():
+	def __init__(self, x, y, image, scale):
+		width = image.get_width()
+		height = image.get_height()
+		self.image = pygame.transform.scale(image, (int(width * scale), int(height * scale)))
+		self.rect = self.image.get_rect()
+		self.rect.topleft = (x, y)
+		self.clicked = False
+
+	def draw(self, surface):
+		action = False
+		#get mouse position
+		pos = pygame.mouse.get_pos()
+
+		#check mouseover and clicked conditions
+		if self.rect.collidepoint(pos):
+			if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+				self.clicked = True
+				action = True
+
+		if pygame.mouse.get_pressed()[0] == 0:
+			self.clicked = False
+
+		#draw button on screen
+		surface.blit(self.image, (self.rect.x, self.rect.y))
+
+		return action
 
 class Queue:
     def __init__(self):
@@ -128,7 +141,20 @@ class Stack:
 
     def size(self):
         return len(self.items)
-    
+
+#create button instances
+escape_button = Button(0, 0, escape_img, 1)
+clear_button = Button(0, 50, clear_img, 1)
+run_button = Button(0, 100, run_img, 1)
+maze_button = Button(window_center -150/2 , window_center - 100, maze_img, 1)
+bfs_button = Button(window_center + button_gap*2 + 150, window_center, bfs_img, 1)
+dfs_button = Button(window_center -300 - button_gap*2, window_center, dfs_img, 1)
+dijkstras_button = Button(window_center -150 - button_gap, window_center, dijkstras_img, 1)
+a_star_button = Button(window_center + button_gap, window_center, a_star_img, 1)
+fast_button = Button(window_center -150 - button_gap, window_center+100, fast_img, 1)
+slow_button = Button(window_center + button_gap , window_center+ 100, slow_img, 1)
+resume_button = Button(window_center -150/2 , window_center+ 200, resume_img, 1)
+
 #Create grid
 def make_grid():
     grid = []
@@ -155,7 +181,6 @@ def get_mouse_pos():
 #manhattan distance
 def heuristics(a, b):
     return math.sqrt((a.x - b.x)**2 + abs(a.y - b.y)**2)
-
 
 def dijkstra(start_cell, target_cell, searching, queue, path):#bfs = dijkstras as weight of each edge equals 1
     if queue.size() > 0 and searching:
@@ -207,7 +232,6 @@ def bfs(start_cell, target_cell, searching, queue, path):
 
     return searching
 
-
 def a_star(start_cell, target_cell, searching, openSet, closeSet, path):
     if len(openSet) > 0 and searching:
         winner = 0
@@ -253,7 +277,6 @@ def a_star(start_cell, target_cell, searching, openSet, closeSet, path):
 
     return searching
     
-
 def dfs(start_cell, target_cell, searching, stack, path):
     if stack.size() > 0 and searching:
         current_cell = stack.pop()
@@ -278,7 +301,6 @@ def dfs(start_cell, target_cell, searching, stack, path):
 
     return searching
     
-
 def maze(grid):
     
     #Fill in the outside walls
@@ -360,7 +382,7 @@ def draw_grid(grid, path):
             cell.draw(window, GREY)
             if cell.blank:
                 cell.draw(window,GREY)
-            if cell.queued or cell.stacked:
+            if cell.queued or cell.stacked:#neighbours
                 cell.draw(window, PURPLE)
             if cell.visited:
                 cell.draw(window, TURQUOISE)
@@ -372,8 +394,6 @@ def draw_grid(grid, path):
                 cell.draw(window, ORANGE)
             if cell.target:
                 cell.draw(window, RED)
-
-
 
 def main():
     grid = make_grid()
@@ -390,8 +410,6 @@ def main():
     selected_algorithm = ""
     set_slow = False
     
-   
-
     while True:
         #check if game is in the menue
         if in_menue:
@@ -519,7 +537,6 @@ def main():
                 searching = dfs(start_cell, target_cell, searching, stack, path)
             if set_slow:
                 time.sleep(0.1)
-            
             
         pygame.display.flip()
 
