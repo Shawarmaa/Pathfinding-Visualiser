@@ -93,7 +93,42 @@ class Cell:
             self.neighbours.append(grid[self.x+1][self.y]) #right
         if self.y < rows - 1:
             self.neighbours.append(grid[self.x][self.y+1]) #up
-        
+
+class Queue:
+    def __init__(self):
+        self.items = []
+
+    def isEmpty(self):
+        return self.items == []
+
+    def enqueue(self, item):
+        self.items.insert(0,item)
+
+    def dequeue(self):
+        return self.items.pop()
+
+    def size(self):
+        return len(self.items)
+
+class Stack:
+    def __init__(self):
+        self.items = []
+
+    def isEmpty(self):
+        return self.items == []
+
+    def push(self, item):
+        self.items.insert(0,item)
+
+    def pop(self):
+        return self.items.pop(0)
+
+    def peek(self):
+        return self.items[0]
+
+    def size(self):
+        return len(self.items)
+    
 #Create grid
 def make_grid():
     grid = []
@@ -123,9 +158,9 @@ def heuristics(a, b):
 
 
 def dijkstra(start_cell, target_cell, searching, queue, path):#bfs = dijkstras as weight of each edge equals 1
-    if len(queue) > 0 and searching:
+    if queue.size() > 0 and searching:
         #queue.append(start_cell)
-        current_cell = queue.pop(0)
+        current_cell = queue.dequeue()
         current_cell.visited = True
         if current_cell == target_cell:
             searching = False
@@ -138,7 +173,7 @@ def dijkstra(start_cell, target_cell, searching, queue, path):#bfs = dijkstras a
                 if not neighbour.queued and not neighbour.wall:
                     neighbour.queued = True
                     neighbour.prior = current_cell #stores the prior cell
-                    queue.append(neighbour)
+                    queue.enqueue(neighbour)
     else:
         if searching:
             Tk().wm_withdraw()
@@ -148,8 +183,9 @@ def dijkstra(start_cell, target_cell, searching, queue, path):#bfs = dijkstras a
     return searching
             
 def bfs(start_cell, target_cell, searching, queue, path):
-    if len(queue) > 0 and searching:
-        current_cell = queue.pop(0)
+    if queue.size() > 0 and searching:
+        #queue.append(start_cell)
+        current_cell = queue.dequeue()
         current_cell.visited = True
         if current_cell == target_cell:
             searching = False
@@ -162,7 +198,7 @@ def bfs(start_cell, target_cell, searching, queue, path):
                 if not neighbour.queued and not neighbour.wall:
                     neighbour.queued = True
                     neighbour.prior = current_cell #stores the prior cell
-                    queue.append(neighbour)
+                    queue.enqueue(neighbour)
     else:
         if searching:
             Tk().wm_withdraw()
@@ -173,7 +209,6 @@ def bfs(start_cell, target_cell, searching, queue, path):
 
 
 def a_star(start_cell, target_cell, searching, openSet, closeSet, path):
-
     if len(openSet) > 0 and searching:
         winner = 0
         for i in range(len(openSet)):
@@ -220,7 +255,7 @@ def a_star(start_cell, target_cell, searching, openSet, closeSet, path):
     
 
 def dfs(start_cell, target_cell, searching, stack, path):
-    if len(stack) > 0 and searching:
+    if stack.size() > 0 and searching:
         current_cell = stack.pop()
         current_cell.visited = True
         if current_cell == target_cell:
@@ -234,7 +269,7 @@ def dfs(start_cell, target_cell, searching, stack, path):
                 if not neighbour.visited and not neighbour.wall:
                     neighbour.stacked = True
                     neighbour.prior = current_cell #stores the prior cell
-                    stack.append(neighbour)
+                    stack.push(neighbour)
     else:
         if searching:
             Tk().wm_withdraw()
@@ -339,6 +374,7 @@ def draw_grid(grid, path):
                 cell.draw(window, RED)
 
 
+
 def main():
     grid = make_grid()
     set_neighbours(grid)
@@ -390,12 +426,12 @@ def main():
                 begin_search = True
                 searching = True
                 start_cell.visited = True
-                queue = []
-                stack = []
+                queue = Queue()
+                stack = Stack()
                 path = []
                 openSet, closeSet = [], []
-                queue.append(start_cell)
-                stack.append(start_cell)
+                queue.enqueue(start_cell)
+                stack.push(start_cell)
                 openSet.append(start_cell)
             #clears the grid
             if clear_button.draw(window):
