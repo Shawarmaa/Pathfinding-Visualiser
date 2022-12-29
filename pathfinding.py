@@ -346,6 +346,7 @@ def main():
     in_menue = True
     maze_set = False
     selected_algorithm = ""
+    set_slow = False
     
    
 
@@ -371,6 +372,11 @@ def main():
             if dijkstras_button.draw(window):
                 selected_algorithm = "dijkstras"
                 in_menue = False
+            #selecting traversing speed
+            if slow_button.draw(window):
+                set_slow = True
+            if fast_button.draw(window):
+                set_slow = False
         else:
             pygame.display.set_caption("Pathfinding Visualiser")
             window.fill(BLACK)
@@ -471,6 +477,8 @@ def main():
                 searching = bfs(start_cell, target_cell, searching, queue, path)
             if selected_algorithm == "dfs":
                 searching = dfs(start_cell, target_cell, searching, stack, path)
+            if set_slow:
+                time.sleep(0.1)
             
             
         pygame.display.flip()
