@@ -182,6 +182,19 @@ def get_mouse_pos():
 def heuristics(a, b):
     return math.sqrt((a.x - b.x)**2 + abs(a.y - b.y)**2)
 
+def create_path(start_cell, path, current_cell):
+    while current_cell.prior != start_cell: 
+        path.append(current_cell.prior)
+        current_cell = current_cell.prior
+
+def error_msg(searching):
+    if searching:
+            Tk().wm_withdraw()
+            messagebox.showinfo("No Solution", "There is no solution")
+            searching = False
+
+    return searching
+
 def dijkstra(start_cell, target_cell, searching, queue, path):#bfs = dijkstras as weight of each edge equals 1
     if queue.size() > 0 and searching:
         #queue.append(start_cell)
@@ -190,9 +203,7 @@ def dijkstra(start_cell, target_cell, searching, queue, path):#bfs = dijkstras a
         if current_cell == target_cell:
             searching = False
             # traces its prior cells that it neigboured
-            while current_cell.prior != start_cell: 
-                path.append(current_cell.prior)
-                current_cell = current_cell.prior
+            create_path(start_cell, path, current_cell)
         else:
             for neighbour in current_cell.neighbours:
                 if not neighbour.queued and not neighbour.wall:
@@ -200,10 +211,7 @@ def dijkstra(start_cell, target_cell, searching, queue, path):#bfs = dijkstras a
                     neighbour.prior = current_cell #stores the prior cell
                     queue.enqueue(neighbour)
     else:
-        if searching:
-            Tk().wm_withdraw()
-            messagebox.showinfo("No Solution", "There is no solution")
-            searching = False
+        searching = error_msg(searching)
 
     return searching
             
@@ -215,9 +223,7 @@ def bfs(start_cell, target_cell, searching, queue, path):
         if current_cell == target_cell:
             searching = False
             # traces its prior cells that it neigboured
-            while current_cell.prior != start_cell: 
-                path.append(current_cell.prior)
-                current_cell = current_cell.prior
+            create_path(start_cell, path, current_cell)
         else:
             for neighbour in current_cell.neighbours:
                 if not neighbour.queued and not neighbour.wall:
@@ -225,10 +231,7 @@ def bfs(start_cell, target_cell, searching, queue, path):
                     neighbour.prior = current_cell #stores the prior cell
                     queue.enqueue(neighbour)
     else:
-        if searching:
-            Tk().wm_withdraw()
-            messagebox.showinfo("No Solution", "There is no solution")
-            searching = False
+        searching = error_msg(searching)
 
     return searching
 
@@ -246,9 +249,7 @@ def a_star(start_cell, target_cell, searching, openSet, closeSet, path):
         if current_cell == target_cell:
             searching = False
             # traces its prior cells that it neigboured
-            while current_cell.prior != start_cell:
-                path.append(current_cell.prior)
-                current_cell = current_cell.prior
+            create_path(start_cell, path, current_cell)
 
         else:
             closeSet.append(current_cell)
@@ -269,10 +270,7 @@ def a_star(start_cell, target_cell, searching, openSet, closeSet, path):
                     neighbour.prior = current_cell
 
     else:
-         if searching:
-            Tk().wm_withdraw()
-            messagebox.showinfo("No Solution", "There was no solution" )
-            searching = False
+         searching = error_msg(searching)
 
     return searching
     
@@ -283,9 +281,7 @@ def dfs(start_cell, target_cell, searching, stack, path):
         if current_cell == target_cell:
             searching = False
             # traces its prior cells that it neigboured
-            while current_cell.prior != start_cell: 
-                path.append(current_cell.prior)
-                current_cell = current_cell.prior
+            create_path(start_cell, path, current_cell)
         else:
             for neighbour in current_cell.neighbours:
                 if not neighbour.visited and not neighbour.wall:
@@ -293,10 +289,7 @@ def dfs(start_cell, target_cell, searching, stack, path):
                     neighbour.prior = current_cell #stores the prior cell
                     stack.push(neighbour)
     else:
-        if searching:
-            Tk().wm_withdraw()
-            messagebox.showinfo("No Solution", "There is no solution")
-            searching = False
+        searching = error_msg(searching)
 
     return searching
     
