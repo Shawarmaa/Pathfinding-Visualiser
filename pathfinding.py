@@ -264,7 +264,6 @@ def a_star(start_cell, target_cell, searching, openSet, closeSet, path):
                         openSet.append(neighbour)
                         neighbour.queued = True
 
-                    
                     neighbour.h = heuristics(neighbour, target_cell)
                     neighbour.f = neighbour.g + neighbour.h
                     neighbour.prior = current_cell
