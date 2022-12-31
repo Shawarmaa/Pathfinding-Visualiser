@@ -428,6 +428,7 @@ def main():
             if resume_button.draw(window):
                 in_menue = False
         else:
+            #in Grid
             pygame.display.set_caption("Pathfinding Visualiser")
             window.fill(BLACK)
             draw_grid(grid, path)
