@@ -425,7 +425,7 @@ def main():
                 set_slow = True
             if fast_button.draw(window):
                 set_slow = False
-            if resume_button.draw(window):
+            if resume_button.draw(window) and selected_algorithm != "":
                 in_menue = False
         else:
             #in Grid
