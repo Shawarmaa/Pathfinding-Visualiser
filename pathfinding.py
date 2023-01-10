@@ -4,6 +4,7 @@ import sys
 import random
 import math
 import time
+import heapq
 
 pygame.init()
 
@@ -63,8 +64,12 @@ class Cell:
         self.visited = False
         self.prior = None
         self.neighbours = []
+        self.distance = float('inf')
 
         self.f, self.g, self.h = 0,0,0
+    
+    def __gt__(self, other): #for heapfunction to operate
+        pass
 
     def draw(self, win, colour):
         pygame.draw.rect(win, colour, (self.x * cell_width, self.y * cell_height, cell_width - 2, cell_height - 2))# if the (-2)lines are removed it will look aesthetic in a maze
@@ -195,21 +200,27 @@ def error_msg(searching):
 
     return searching
 
-def dijkstra(start_cell, target_cell, searching, queue, path):#bfs = dijkstras as weight of each edge equals 1
-    if queue.size() > 0 and searching:
-        #queue.append(start_cell)
-        current_cell = queue.dequeue()
+def dijkstra(start_cell, target_cell, searching, pq, path, heapq, processed):#bfs = dijkstras as weight of each edge equals 1
+    if pq and searching:
+        current_distance, current_cell = heapq.heappop(pq)
         current_cell.visited = True
-        if current_cell == target_cell:
-            searching = False
-            # traces its prior cells that it neigboured
-            create_path(start_cell, path, current_cell)
-        else:
-            for neighbour in current_cell.neighbours:
-                if not neighbour.queued and not neighbour.wall:
-                    neighbour.queued = True
-                    neighbour.prior = current_cell #stores the prior cell
-                    queue.enqueue(neighbour)
+        if current_cell not in processed:
+            processed.add(current_cell)
+
+            if current_cell == target_cell:
+                searching = False
+                # traces its prior cells that it neigboured
+                create_path(start_cell, path, current_cell)
+            else:
+                for neighbour in current_cell.neighbours:
+                    if not neighbour.queued and not neighbour.wall:
+                        distance = current_distance + 1
+                        if distance < neighbour.distance:
+                            neighbour.distance = distance
+                            neighbour.queued = True
+                            neighbour.prior = current_cell #stores the prior cell
+                            heapq.heappush(pq, (distance, neighbour))
+
     else:
         searching = error_msg(searching)
 
@@ -444,6 +455,11 @@ def main():
                 queue.enqueue(start_cell)
                 stack.push(start_cell)
                 openSet.append(start_cell)
+                
+                pq = []
+                start_cell.distance = 0
+                processed = set()
+                heapq.heappush(pq, (0, start_cell))
             #clears the grid
             if clear_button.draw(window):
                 begin_search = False
@@ -523,7 +539,7 @@ def main():
             if selected_algorithm == "a*":
                 searching = a_star(start_cell, target_cell, searching, openSet, closeSet, path)
             if selected_algorithm == "dijkstras":
-                searching = dijkstra(start_cell, target_cell, searching, queue, path)
+                searching = dijkstra(start_cell, target_cell, searching, pq, path, heapq, processed)
             if selected_algorithm == "bfs":
                 searching = bfs(start_cell, target_cell, searching, queue, path)
             if selected_algorithm == "dfs":
