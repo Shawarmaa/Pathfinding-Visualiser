@@ -450,19 +450,15 @@ def main():
             # selecting traversing algorithms
             if a_star_button.draw(window):
                 selected_algorithm = "A*"
-                pygame.display.set_caption(selected_algorithm)
 
             if bfs_button.draw(window):
                 selected_algorithm = "BFS"
-                pygame.display.set_caption(selected_algorithm)
 
             if dfs_button.draw(window):
                 selected_algorithm = "DFS"
-                pygame.display.set_caption(selected_algorithm)
 
             if dijkstras_button.draw(window):
                 selected_algorithm = "Dijkstra's"
-                pygame.display.set_caption(selected_algorithm)
 
             #selecting traversing speed
             if slow_button.draw(window):
@@ -477,7 +473,6 @@ def main():
             #in Grid
             pygame.display.set_caption("Pathfinding Visualiser")
             
-            #window.fill(BLACK)
             draw_grid(grid, path)
 
             #starts the visualisation
