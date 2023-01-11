@@ -29,21 +29,9 @@ WAITING = (102,0,102)
 
 window = pygame.display.set_mode((window_width,window_height))
 
-
 #game buttons(left click, right click, run,clear, [?]/ESC)
 run_img = pygame.image.load("images/run.png").convert_alpha()
 clear_img = pygame.image.load("images/clear.png").convert_alpha()
-escape_img = pygame.image.load("images/escape.png").convert_alpha()
-
-#menue buttons(maze, slow, fast, bfs, dfs, dijkstras, A*)
-maze_img = pygame.image.load("images/maze.png").convert_alpha()
-bfs_img = pygame.image.load("images/button_bfs.png").convert_alpha()
-dfs_img = pygame.image.load("images/button_dfs.png").convert_alpha()
-dijkstras_img = pygame.image.load("images/button_dijkstras.png").convert_alpha()
-a_star_img = pygame.image.load("images/button_a.png").convert_alpha()
-fast_img = pygame.image.load("images/button_fast.png").convert_alpha()
-slow_img = pygame.image.load("images/button_slow.png").convert_alpha()
-resume_img = pygame.image.load("images/button_resume.png").convert_alpha()
 
 #classes
 class Cell:
@@ -79,6 +67,110 @@ class Cell:
             self.neighbours.append(grid[self.x][self.y-1]) #down
         if self.x > 0:
             self.neighbours.append(grid[self.x-1][self.y]) #left
+
+class OptionBox():
+
+    def __init__(self, x, y, w, h, color, highlight_color, font, option_list, selected = 0):
+        self.color = color
+        self.highlight_color = highlight_color
+        self.rect = pygame.Rect(x, y, w, h)
+        self.font = font
+        self.option_list = option_list
+        self.selected = selected
+        self.draw_menu = False
+        self.menu_active = False
+        self.active_option = -1
+
+    def draw(self, surf):
+        pygame.draw.rect(surf, self.highlight_color if self.menu_active else self.color, self.rect)
+        pygame.draw.rect(surf, (0, 0, 0), self.rect, 2)
+        msg = self.font.render(self.option_list[self.selected], 1, (0, 0, 0))
+        surf.blit(msg, msg.get_rect(center = self.rect.center))
+
+        if self.draw_menu:
+            for i, text in enumerate(self.option_list):
+                rect = self.rect.copy()
+                rect.y += (i+1) * self.rect.height
+                pygame.draw.rect(surf, self.highlight_color if i == self.active_option else self.color, rect)
+                msg = self.font.render(text, 1, (0, 0, 0))
+                surf.blit(msg, msg.get_rect(center = rect.center))
+            outer_rect = (self.rect.x, self.rect.y + self.rect.height, self.rect.width, self.rect.height * len(self.option_list))
+            pygame.draw.rect(surf, (0, 0, 0), outer_rect, 2)
+
+    def update(self, event_list):
+        mpos = pygame.mouse.get_pos()
+        self.menu_active = self.rect.collidepoint(mpos)
+        
+        self.active_option = -1
+        for i in range(len(self.option_list)):
+            rect = self.rect.copy()
+            rect.y += (i+1) * self.rect.height
+            if rect.collidepoint(mpos):
+                self.active_option = i
+                break
+
+        if not self.menu_active and self.active_option == -1:
+            self.draw_menu = False
+
+        for event in event_list:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self.menu_active:
+                    self.draw_menu = not self.draw_menu
+                elif self.draw_menu and self.active_option >= 0:
+                    self.selected = self.active_option
+                    self.draw_menu = False
+                    return self.selected
+        return -1
+
+class DropDown():
+
+    def __init__(self, color_menu, color_option, x, y, w, h, font, main, options):
+        self.color_menu = color_menu
+        self.color_option = color_option
+        self.rect = pg.Rect(x, y, w, h)
+        self.font = font
+        self.main = main
+        self.options = options
+        self.draw_menu = False
+        self.menu_active = False
+        self.active_option = -1
+
+    def draw(self, surf):
+        pg.draw.rect(surf, self.color_menu[self.menu_active], self.rect, 0)
+        msg = self.font.render(self.main, 1, (0, 0, 0))
+        surf.blit(msg, msg.get_rect(center = self.rect.center))
+
+        if self.draw_menu:
+            for i, text in enumerate(self.options):
+                rect = self.rect.copy()
+                rect.y += (i+1) * self.rect.height
+                pg.draw.rect(surf, self.color_option[1 if i == self.active_option else 0], rect, 0)
+                msg = self.font.render(text, 1, (0, 0, 0))
+                surf.blit(msg, msg.get_rect(center = rect.center))
+
+    def update(self, event_list):
+        mpos = pg.mouse.get_pos()
+        self.menu_active = self.rect.collidepoint(mpos)
+        
+        self.active_option = -1
+        for i in range(len(self.options)):
+            rect = self.rect.copy()
+            rect.y += (i+1) * self.rect.height
+            if rect.collidepoint(mpos):
+                self.active_option = i
+                break
+
+        if not self.menu_active and self.active_option == -1:
+            self.draw_menu = False
+
+        for event in event_list:
+            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                if self.menu_active:
+                    self.draw_menu = not self.draw_menu
+                elif self.draw_menu and self.active_option >= 0:
+                    self.draw_menu = False
+                    return self.active_option
+        return -1
 
 class Button():
 	def __init__(self, x, y, image, scale):
@@ -167,17 +259,9 @@ class PriorityQueue:
         return len(self.queue)
     
 #create button instances
-escape_button = Button(0, 0, escape_img, 1)
 clear_button = Button(0, 50, clear_img, 1)
 run_button = Button(0, 100, run_img, 1)
-maze_button = Button(window_center -150/2 , window_center - 100, maze_img, 1)
-bfs_button = Button(window_center + button_gap*2 + 150, window_center, bfs_img, 1)
-dfs_button = Button(window_center -300 - button_gap*2, window_center, dfs_img, 1)
-dijkstras_button = Button(window_center -150 - button_gap, window_center, dijkstras_img, 1)
-a_star_button = Button(window_center + button_gap, window_center, a_star_img, 1)
-fast_button = Button(window_center -150 - button_gap, window_center+100, fast_img, 1)
-slow_button = Button(window_center + button_gap , window_center+ 100, slow_img, 1)
-resume_button = Button(window_center -150/2 , window_center+ 200, resume_img, 1)
+
 
 #Create grid
 def make_grid():
@@ -443,6 +527,10 @@ def draw_grid(grid, path):
             if cell.target:
                 cell.draw(window, END)
 
+def clear():
+    pass
+
+
 def main():
     grid = make_grid()
     set_neighbours(grid)
@@ -453,98 +541,36 @@ def main():
     target_cell_set = False
     start_cell = None
     target_cell = None
-    in_menue = True
     maze_set = False
-    selected_algorithm = ""
-    set_slow = False
+    selected_algorithm, selected_maze = "", ""
+    
+    
+    algorithms = OptionBox(5, 5, 120, 40, (150, 150, 150), (100, 200, 255), pygame.font.SysFont(None, 30), 
+    ["Dijkstra's", "A*", "BFS", "DFS"])
+
+    algorithms_dict = {0: "Dijkstra's", 1: "A*", 2: "BFS", 3: "DFS"}
+
+    maze_menue = OptionBox(130, 5, 120, 40, (150, 150, 150), (100, 200, 255), pygame.font.SysFont(None, 30), 
+    ["Maze", "Empty Grid"])
+
+    maze_menue_dict =  {0: "Maze", 1: "Empty Grid"}
+
+
     
     while True:
         #check if game is in the menue
-        if in_menue:
-            pygame.display.set_caption("Menu")
-            window.fill(WALL)
-
-            #selecting maze
-            if maze_button.draw(window) and maze_set == False and not begin_search:
-                maze(grid)
-                maze_set = True
-
-            # selecting traversing algorithms
-            if a_star_button.draw(window):
-                selected_algorithm = "A*"
-
-            if bfs_button.draw(window):
-                selected_algorithm = "BFS"
-
-            if dfs_button.draw(window):
-                selected_algorithm = "DFS"
-
-            if dijkstras_button.draw(window):
-                selected_algorithm = "Dijkstra's"
-
-            #selecting traversing speed
-            if slow_button.draw(window):
-                set_slow = True
-            if fast_button.draw(window):
-                set_slow = False
-
-            if resume_button.draw(window) and selected_algorithm != "":
-                in_menue = False
-
-        else:
-            #in Grid
-            pygame.display.set_caption("Pathfinding Visualiser")
-            
-            draw_grid(grid, path)
-
-            #starts the visualisation
-            if run_button.draw(window) and target_cell_set == True and start_cell_set == True and not begin_search:
-                begin_search = True
-                searching = True
-                start_cell.visited = True
-                path = []
-                stack = Stack()
-                stack.push(start_cell)
-                openSet, closeSet = [], []
-                openSet.append(start_cell)
-                queue = Queue()
-                queue.enqueue(start_cell)
-                pq = PriorityQueue()
-                pq.insert(0,start_cell)
-                
-            #clears the grid
-            if clear_button.draw(window):
-                begin_search = False
-                start_cell_set = False
-                target_cell_set = False
-                start_cell = None
-                target_cell = None
-                maze_set = False
-                grid = make_grid()
-                set_neighbours(grid)
-
-            #switches to the menue
-            if escape_button.draw(window):
-                in_menue = True
-                begin_search = False
-                start_cell_set = False
-                target_cell_set = False
-                start_cell = None
-                target_cell = None
-                maze_set = False
-                grid = make_grid()
-                set_neighbours(grid)
+        event_list = pygame.event.get()
 
         #event handler
-        for event in pygame.event.get():
-
+        for event in event_list:
+            
             #quit window
             if event.type == pygame.QUIT: 
                 pygame.quit()
                 sys.exit()
-
+            
             #set nodes
-            if pygame.mouse.get_pressed()[0] and in_menue == False and begin_search == False:
+            if pygame.mouse.get_pressed()[0] and begin_search == False:
                 x, y= get_mouse_pos()
                 i = x // cell_width
                 j = y // cell_height
@@ -572,7 +598,7 @@ def main():
                     cell.blank = False
 
             #remove nodes
-            elif pygame.mouse.get_pressed()[2] and in_menue == False and begin_search == False:
+            elif pygame.mouse.get_pressed()[2] and begin_search == False:
                 x, y= get_mouse_pos()
                 i = x // cell_width
                 j = y // cell_height
@@ -592,8 +618,42 @@ def main():
 
             #check states
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    in_menue = True
+                
+                if event.key == pygame.K_SPACE and target_cell_set == True and start_cell_set == True and not begin_search:
+                    begin_search = True
+                    searching = True
+                    start_cell.visited = True
+                    path = []
+                    stack = Stack()
+                    stack.push(start_cell)
+                    openSet, closeSet = [], []
+                    openSet.append(start_cell)
+                    queue = Queue()
+                    queue.enqueue(start_cell)
+                    pq = PriorityQueue()
+                    pq.insert(0,start_cell)
+                
+                if event.key == pygame.K_c:
+                    begin_search = False
+                    start_cell_set = False
+                    target_cell_set = False
+                    start_cell = None
+                    target_cell = None
+                    maze_set = False
+                    grid = make_grid()
+                    set_neighbours(grid)
+       
+        #updates drop down menu options
+        selected_algos = algorithms.update(event_list)
+        if selected_algos >= 0:
+            selected_algorithm = algorithms_dict[selected_algos]
+            
+        
+        selected_maze_menue = maze_menue.update(event_list)
+        if selected_maze_menue >= 0:
+            selected_maze = maze_menue_dict[selected_maze_menue]
+        
+
 
         #check algos
         if begin_search:
@@ -605,9 +665,19 @@ def main():
                 searching = bfs(start_cell, target_cell, searching, queue, path)
             if selected_algorithm == "DFS":
                 searching = dfs(start_cell, target_cell, searching, stack, path)
-            if set_slow:
-                time.sleep(0.05)
+
+        else:
+            if selected_maze == "Maze" and maze_set == False:
+                maze(grid)
+                maze_set = True
+            if selected_maze == "Empty Grid" and maze_set == True:
+                maze_set = False
+                #clear()
             
+
+        draw_grid(grid, path)
+        algorithms.draw(window)
+        maze_menue.draw(window)
         pygame.display.flip()
 
 main()
