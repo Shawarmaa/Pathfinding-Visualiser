@@ -4,7 +4,6 @@ import sys
 import random
 import math
 import time
-import heapq
 
 pygame.init()
 
@@ -144,6 +143,29 @@ class Stack:
     def size(self):
         return len(self.items)
 
+class PriorityQueue:
+    def __init__(self):
+        self.queue = []
+ 
+    def insert(self, priority, val):
+        self.queue.append((priority, val))
+ 
+    def remove(self):
+        max_idx = 0
+        for i in range(1, len(self.queue)):
+            if self.queue[i][0] < self.queue[max_idx][0]:
+                max_idx = i
+        val = self.queue[max_idx][1]
+        while max_idx < len(self.queue) - 1:
+            self.queue[max_idx] = self.queue[max_idx + 1]
+            max_idx += 1
+        priority = self.queue.pop()
+
+        return priority[0], val
+    
+    def size(self):
+        return len(self.queue)
+    
 #create button instances
 escape_button = Button(0, 0, escape_img, 1)
 clear_button = Button(0, 50, clear_img, 1)
@@ -202,11 +224,11 @@ def error_msg(searching):
 
     return searching
 
-def dijkstra(start_cell, target_cell, searching, pq, path, heapq):
+def dijkstra(start_cell, target_cell, searching, pq, path):
 
     #when the queue is not empty
-    if pq and searching:
-        current_distance, current_cell = heapq.heappop(pq)
+    if pq.size() > 0 and searching:
+        current_distance, current_cell = pq.remove()
         current_cell.visited = True
        
         if current_cell == target_cell:
@@ -224,7 +246,7 @@ def dijkstra(start_cell, target_cell, searching, pq, path, heapq):
                     if distance < neighbour.distance:
                         neighbour.distance = distance
                         neighbour.waiting = True
-                        heapq.heappush(pq, (distance, neighbour))
+                        pq.insert(distance, neighbour)
                         neighbour.prior = current_cell 
 
     else:
@@ -487,9 +509,8 @@ def main():
                 openSet.append(start_cell)
                 queue = Queue()
                 queue.enqueue(start_cell)
-                pq = []
-                start_cell.distance = 0
-                heapq.heappush(pq, (0, start_cell))
+                pq = PriorityQueue()
+                pq.insert(0,start_cell)
                 
             #clears the grid
             if clear_button.draw(window):
@@ -579,7 +600,7 @@ def main():
             if selected_algorithm == "A*":
                 searching = a_star(start_cell, target_cell, searching, openSet, closeSet, path)
             if selected_algorithm == "Dijkstra's":
-                searching = dijkstra(start_cell, target_cell, searching, pq, path, heapq)
+                searching = dijkstra(start_cell, target_cell, searching, pq, path)
             if selected_algorithm == "BFS":
                 searching = bfs(start_cell, target_cell, searching, queue, path)
             if selected_algorithm == "DFS":
