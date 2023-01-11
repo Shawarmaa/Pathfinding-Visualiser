@@ -19,6 +19,7 @@ rows, columns = 50, 50
 cell_width = window_width // rows
 cell_height = window_height // columns
 
+#cell colours
 START = (0,128,0)
 END = (255, 0, 0)
 WALL = (8, 8, 8)
@@ -26,6 +27,12 @@ BLANK = (238,215,218)
 VISITED = (172,58,74)
 PATH = (205, 141, 0)
 WAITING = (102,0,102)
+
+#button colours
+COLOR_INACTIVE = (100, 80, 255)
+COLOR_ACTIVE = (100, 200, 255)
+COLOR_LIST_INACTIVE = (255, 100, 100)
+COLOR_LIST_ACTIVE = (255, 150, 150)
 
 window = pygame.display.set_mode((window_width,window_height))
 
@@ -68,66 +75,12 @@ class Cell:
         if self.x > 0:
             self.neighbours.append(grid[self.x-1][self.y]) #left
 
-class OptionBox():
-
-    def __init__(self, x, y, w, h, color, highlight_color, font, option_list, selected = 0):
-        self.color = color
-        self.highlight_color = highlight_color
-        self.rect = pygame.Rect(x, y, w, h)
-        self.font = font
-        self.option_list = option_list
-        self.selected = selected
-        self.draw_menu = False
-        self.menu_active = False
-        self.active_option = -1
-
-    def draw(self, surf):
-        pygame.draw.rect(surf, self.highlight_color if self.menu_active else self.color, self.rect)
-        pygame.draw.rect(surf, (0, 0, 0), self.rect, 2)
-        msg = self.font.render(self.option_list[self.selected], 1, (0, 0, 0))
-        surf.blit(msg, msg.get_rect(center = self.rect.center))
-
-        if self.draw_menu:
-            for i, text in enumerate(self.option_list):
-                rect = self.rect.copy()
-                rect.y += (i+1) * self.rect.height
-                pygame.draw.rect(surf, self.highlight_color if i == self.active_option else self.color, rect)
-                msg = self.font.render(text, 1, (0, 0, 0))
-                surf.blit(msg, msg.get_rect(center = rect.center))
-            outer_rect = (self.rect.x, self.rect.y + self.rect.height, self.rect.width, self.rect.height * len(self.option_list))
-            pygame.draw.rect(surf, (0, 0, 0), outer_rect, 2)
-
-    def update(self, event_list):
-        mpos = pygame.mouse.get_pos()
-        self.menu_active = self.rect.collidepoint(mpos)
-        
-        self.active_option = -1
-        for i in range(len(self.option_list)):
-            rect = self.rect.copy()
-            rect.y += (i+1) * self.rect.height
-            if rect.collidepoint(mpos):
-                self.active_option = i
-                break
-
-        if not self.menu_active and self.active_option == -1:
-            self.draw_menu = False
-
-        for event in event_list:
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if self.menu_active:
-                    self.draw_menu = not self.draw_menu
-                elif self.draw_menu and self.active_option >= 0:
-                    self.selected = self.active_option
-                    self.draw_menu = False
-                    return self.selected
-        return -1
-
 class DropDown():
 
     def __init__(self, color_menu, color_option, x, y, w, h, font, main, options):
         self.color_menu = color_menu
         self.color_option = color_option
-        self.rect = pg.Rect(x, y, w, h)
+        self.rect = pygame.Rect(x, y, w, h)
         self.font = font
         self.main = main
         self.options = options
@@ -136,7 +89,7 @@ class DropDown():
         self.active_option = -1
 
     def draw(self, surf):
-        pg.draw.rect(surf, self.color_menu[self.menu_active], self.rect, 0)
+        pygame.draw.rect(surf, self.color_menu[self.menu_active], self.rect, 0)
         msg = self.font.render(self.main, 1, (0, 0, 0))
         surf.blit(msg, msg.get_rect(center = self.rect.center))
 
@@ -144,12 +97,12 @@ class DropDown():
             for i, text in enumerate(self.options):
                 rect = self.rect.copy()
                 rect.y += (i+1) * self.rect.height
-                pg.draw.rect(surf, self.color_option[1 if i == self.active_option else 0], rect, 0)
+                pygame.draw.rect(surf, self.color_option[1 if i == self.active_option else 0], rect, 0)
                 msg = self.font.render(text, 1, (0, 0, 0))
                 surf.blit(msg, msg.get_rect(center = rect.center))
 
     def update(self, event_list):
-        mpos = pg.mouse.get_pos()
+        mpos = pygame.mouse.get_pos()
         self.menu_active = self.rect.collidepoint(mpos)
         
         self.active_option = -1
@@ -164,7 +117,7 @@ class DropDown():
             self.draw_menu = False
 
         for event in event_list:
-            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.menu_active:
                     self.draw_menu = not self.draw_menu
                 elif self.draw_menu and self.active_option >= 0:
@@ -544,17 +497,19 @@ def main():
     maze_set = False
     selected_algorithm, selected_maze = "", ""
     
-    
-    algorithms = OptionBox(5, 5, 120, 40, (150, 150, 150), (100, 200, 255), pygame.font.SysFont(None, 30), 
+    algorithms = DropDown(
+    [COLOR_INACTIVE, COLOR_ACTIVE],
+    [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE], 
+    5, 5, 120, 40,
+    pygame.font.SysFont(None, 30)," Algorithms",
     ["Dijkstra's", "A*", "BFS", "DFS"])
 
-    algorithms_dict = {0: "Dijkstra's", 1: "A*", 2: "BFS", 3: "DFS"}
-
-    maze_menue = OptionBox(130, 5, 120, 40, (150, 150, 150), (100, 200, 255), pygame.font.SysFont(None, 30), 
+    maze_menue = DropDown(
+    [COLOR_INACTIVE, COLOR_ACTIVE],
+    [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE], 
+    130, 5, 120, 40,
+    pygame.font.SysFont(None, 30)," Add-on",
     ["Maze", "Empty Grid"])
-
-    maze_menue_dict =  {0: "Maze", 1: "Empty Grid"}
-
 
     
     while True:
@@ -644,17 +599,14 @@ def main():
                     set_neighbours(grid)
        
         #updates drop down menu options
-        selected_algos = algorithms.update(event_list)
-        if selected_algos >= 0:
-            selected_algorithm = algorithms_dict[selected_algos]
-            
+        selected_algo = algorithms.update(event_list)
+        if selected_algo >= 0:
+            selected_algorithm = algorithms.main = algorithms.options[selected_algo]
         
         selected_maze_menue = maze_menue.update(event_list)
         if selected_maze_menue >= 0:
-            selected_maze = maze_menue_dict[selected_maze_menue]
+            selected_maze = maze_menue.main = maze_menue.options[selected_maze_menue]
         
-
-
         #check algos
         if begin_search:
             if selected_algorithm == "A*":
