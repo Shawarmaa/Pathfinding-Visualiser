@@ -54,21 +54,50 @@ class Cell:
         self.prior = None
         self.neighbours = []
         self.distance = float('inf')
+        self.menue = False
 
         self.f, self.g, self.h = 0,0,0
     
     def __gt__(self, other): #for heapfunction to operate
         pass
+    
+    def make_start(self):
+        self.start = True
+        self.blank = False
+        self.wall = False
+        return self.start
+
+    def make_target(self):
+        self.target = True
+        self.blank = False
+        self.wall = False
+        return self.target
+
+    def make_wall(self):
+        self.wall = True
+        self.blank = False
+
+    def make_blank(self):
+        self.blank = True
+
+    def remove_start(self):
+        self.start = False
+        return self.start
+
+    def remove_target(self):
+        self.target = False
+        return self.target
+
 
     def draw(self, win, colour):
         
-        pygame.draw.rect(win, colour, (self.x * cell_width, self.y * cell_height, cell_width, cell_height))# if the (-2)lines are removed it will look aesthetic in a maze
+        pygame.draw.rect(win, colour, (self.x * cell_width, self.y * cell_height, cell_width -0 , cell_height -0))# if the (-2)lines are removed it will look aesthetic in a maze
 
     def set_neighbours(self, grid):
 
-        if self.y < rows - 1:
+        if self.y < rows -1:
             self.neighbours.append(grid[self.x][self.y+1]) #up
-        if self.x < columns - 1:
+        if self.x < columns -1:
             self.neighbours.append(grid[self.x+1][self.y]) #right
         if self.y > 0:
             self.neighbours.append(grid[self.x][self.y-1]) #down
@@ -225,6 +254,9 @@ def make_grid():
         for j in range(rows):
             arr.append(Cell(i,j))
         grid.append(arr)
+    
+    set_neighbours(grid)
+
     return grid
 
 #Set Neighbours
@@ -235,7 +267,7 @@ def set_neighbours(grid):
             grid[i][j].set_neighbours(grid)
 
 def get_mouse_pos():
-
+    
     x = pygame.mouse.get_pos()[0]
     y = pygame.mouse.get_pos()[1]
     
@@ -392,15 +424,15 @@ def maze(grid):
 #border walls
 def create_outside_walls(grid):
     #Create outside border walls
-        #Create left and right walls
-        for i in range(len(grid)):
-            (grid[i][0]).wall = True
-            (grid[i][len(grid[i])-1]).wall = True
+    #Create left and right walls
+    for i in range(len(grid)):
+        (grid[i][0]).wall = True
+        (grid[i][len(grid[i])-1]).wall = True
 
-        #Create top and bottom walls
-        for j in range(1, len(grid[0]) - 1):
-            (grid[0][j]).wall = True
-            (grid[len(grid) - 1][j]).wall = True
+    #Create top and bottom walls
+    for j in range(1, len(grid[0]) - 1):
+        (grid[0][j]).wall = True
+        (grid[len(grid) - 1][j]).wall = True
 
 #recursive division
 def make_maze_recursive_call(grid, top, bottom, left, right):
@@ -459,11 +491,14 @@ def make_maze_recursive_call(grid, top, bottom, left, right):
 
 #setting a colour to each cell    
 def draw_grid(grid, path):
-    
+    #set menue
+    for k in range(len(grid)):
+        for l in range(0,3):
+            (grid[k][l]).menue = True
+            (grid[k][l]).wall = True
+
     for i in range(columns):
-
         for j in range(rows):
-
             cell = grid[i][j]
             if cell.blank:
                 cell.draw(window,BLANK)
@@ -480,40 +515,33 @@ def draw_grid(grid, path):
             if cell.target:
                 cell.draw(window, END)
 
-def clear():
-    pass
-
 
 def main():
-    grid = make_grid()
-    set_neighbours(grid)
-    path = []
-    begin_search = False
-    searching = True
-    start_cell_set = False
-    target_cell_set = False
-    start_cell = None
-    target_cell = None
-    maze_set = False
-    selected_algorithm, selected_maze = "", ""
     
+    def clear():
+        return False, False, False, None, None, False, []
+
+    searching = True
+    begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
+    grid = make_grid()
+
+    selected_algorithm, selected_maze = "", ""
     algorithms = DropDown(
     [COLOR_INACTIVE, COLOR_ACTIVE],
     [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE], 
-    5, 5, 120, 40,
+    5, 4, 120, 40,
     pygame.font.SysFont(None, 30)," Algorithms",
     ["Dijkstra's", "A*", "BFS", "DFS"])
 
     maze_menue = DropDown(
     [COLOR_INACTIVE, COLOR_ACTIVE],
     [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE], 
-    130, 5, 120, 40,
+    130, 4, 120, 40,
     pygame.font.SysFont(None, 30)," Add-on",
     ["Maze", "Empty Grid"])
-
     
+   
     while True:
-        #check if game is in the menue
         event_list = pygame.event.get()
 
         #event handler
@@ -531,26 +559,21 @@ def main():
                 j = y // cell_height
                 cell = grid[i][j]
 
+                if cell.menue == True:
+                    pass
                 #set start
-                if start_cell_set == False:
-                    cell.start = True
+                elif start_cell_set == False:
                     start_cell = cell
-                    start_cell_set = True
-                    cell.blank = False
-                    cell.wall = False
+                    start_cell_set = cell.make_start()
 
                 #set target
                 elif target_cell_set == False and not cell.start: # not will return True if the expression is False
-                    cell.target = True
                     target_cell = cell
-                    target_cell_set = True
-                    cell.blank = False
-                    cell.wall = False
-
+                    target_cell_set = cell.make_target()
+                    
                 #set wall
                 elif not cell.start and not cell.target:
-                    cell.wall = True
-                    cell.blank = False
+                    cell.make_wall()
 
             #remove nodes
             elif pygame.mouse.get_pressed()[2] and begin_search == False:
@@ -558,18 +581,17 @@ def main():
                 i = x // cell_width
                 j = y // cell_height
                 cell = grid[i][j]
-                cell.blank = True
+                cell.make_blank()
 
                 #remove start
                 if cell.start:
-                    cell.start = False
-                    start_cell_set = False
+                    start_cell_set = cell.remove_start()
 
                 #remove target
                 elif cell.target:
-                    cell.target = False
-                    target_cell_set = False
-                cell.wall = False
+                    target_cell_set = cell.remove_target()
+
+                cell.make_wall()
 
             #check states
             if event.type == pygame.KEYDOWN:
@@ -578,7 +600,6 @@ def main():
                     begin_search = True
                     searching = True
                     start_cell.visited = True
-                    path = []
                     stack = Stack()
                     stack.push(start_cell)
                     openSet, closeSet = [], []
@@ -589,14 +610,8 @@ def main():
                     pq.insert(0,start_cell)
                 
                 if event.key == pygame.K_c:
-                    begin_search = False
-                    start_cell_set = False
-                    target_cell_set = False
-                    start_cell = None
-                    target_cell = None
-                    maze_set = False
+                    begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
                     grid = make_grid()
-                    set_neighbours(grid)
        
         #updates drop down menu options
         selected_algo = algorithms.update(event_list)
@@ -623,13 +638,14 @@ def main():
                 maze(grid)
                 maze_set = True
             if selected_maze == "Empty Grid" and maze_set == True:
-                maze_set = False
-                #clear()
+                begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
+                grid = make_grid()
             
 
         draw_grid(grid, path)
         algorithms.draw(window)
         maze_menue.draw(window)
+
         pygame.display.flip()
 
 main()
