@@ -31,10 +31,10 @@ PATH = (205, 141, 0)
 WAITING = (102,0,102)
 
 #button colours
-COLOR_INACTIVE = (100, 80, 255)
+COLOR_INACTIVE = (33, 37, 41)
 COLOR_ACTIVE = (100, 200, 255)
 COLOR_LIST_INACTIVE = (255,255,255)
-COLOR_LIST_ACTIVE = (255, 150, 150)
+COLOR_LIST_ACTIVE = (100, 200, 255)
 
 window = pygame.display.set_mode((window_width,window_height))
 
@@ -121,7 +121,7 @@ class DropDown():
 
     def draw(self, surf):
         pygame.draw.rect(surf, self.color_menu[self.menu_active], self.rect, 0)
-        msg = self.font.render(self.main, 1, (0, 0, 0))
+        msg = self.font.render(self.main, 1, (255,255,255))
         surf.blit(msg, msg.get_rect(center = self.rect.center))
 
         if self.draw_menu:
@@ -544,7 +544,7 @@ def main():
     
    
     while True:
-        fpsClock.tick(100)
+        #fpsClock.tick(60)
 
         event_list = pygame.event.get()
 
@@ -631,7 +631,7 @@ def main():
             if selected_algorithm == "A*":
                 searching = a_star(start_cell, target_cell, searching, openSet, closeSet, path)
             if selected_algorithm == "Dijkstra's":
-                searching = dijkstra(start_cell, target_cell, searching, pq, path)
+                searching = dijkstra(start_cell, target_cell, searching, pq, path)       
             if selected_algorithm == "BFS":
                 searching = bfs(start_cell, target_cell, searching, queue, path)
             if selected_algorithm == "DFS":
