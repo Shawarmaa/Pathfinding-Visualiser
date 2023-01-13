@@ -19,11 +19,13 @@ rows, columns = 50, 50
 cell_width = window_width // rows
 cell_height = window_height // columns
 
+fpsClock = pygame.time.Clock()
+
 #cell colours
 START = (0,128,0)
 END = (255, 0, 0)
-WALL = (8, 8, 8)
-BLANK = (238,215,218)
+WALL = (33, 37, 41)
+BLANK = (255,255,255)
 VISITED = (172,58,74)
 PATH = (205, 141, 0)
 WAITING = (102,0,102)
@@ -31,7 +33,7 @@ WAITING = (102,0,102)
 #button colours
 COLOR_INACTIVE = (100, 80, 255)
 COLOR_ACTIVE = (100, 200, 255)
-COLOR_LIST_INACTIVE = (255, 100, 100)
+COLOR_LIST_INACTIVE = (255,255,255)
 COLOR_LIST_ACTIVE = (255, 150, 150)
 
 window = pygame.display.set_mode((window_width,window_height))
@@ -517,7 +519,7 @@ def draw_grid(grid, path):
 
 
 def main():
-    
+    #resets the variables
     def clear():
         return False, False, False, None, None, False, []
 
@@ -542,6 +544,8 @@ def main():
     
    
     while True:
+        fpsClock.tick(100)
+
         event_list = pygame.event.get()
 
         #event handler
