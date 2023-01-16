@@ -12,8 +12,6 @@ window_width, window_height = 800, 800
 
 window_center = window_width/2
 
-button_gap = 10
-
 rows, columns = 50, 50
 
 cell_width = window_width // rows
