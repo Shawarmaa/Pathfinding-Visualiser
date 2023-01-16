@@ -88,7 +88,10 @@ class Cell:
     def remove_target(self):
         self.target = False
         return self.target
-
+    
+    def remove_wall(self):
+        self.wall = False
+        self.blank = True
 
     def draw(self, win, colour):
         
@@ -298,7 +301,6 @@ def error_msg(searching):
     return searching
 
 def dijkstra(start_cell, target_cell, searching, pq, path):
-
     #when the queue is not empty
     if pq.size() > 0 and searching:
         current_distance, current_cell = pq.remove()
@@ -322,8 +324,7 @@ def dijkstra(start_cell, target_cell, searching, pq, path):
                         pq.insert(distance, neighbour)
                         neighbour.prior = current_cell 
 
-    else:
-        searching = error_msg(searching)
+  
 
     return searching
             
@@ -524,7 +525,7 @@ def main():
     def clear():
         return False, False, False, None, None, False, []
 
-    searching = True
+    searching = False
     begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
     grid = make_grid()
     selected_algorithm, selected_speed = "", ""
@@ -544,7 +545,6 @@ def main():
     mazeButton = Button(font, "Maze", 120, 40, (255, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
     runButton = Button(font, "Visualise", 120, 40, (380, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
     clearButton = Button(font, "Clear", 120, 40, (505, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
-
 
     while True:
         #FPS
@@ -599,7 +599,7 @@ def main():
                 elif cell.target:
                     target_cell_set = cell.remove_target()
 
-                cell.make_wall()#edit remove walls function
+                cell.remove_wall()
 
         #updates drop down menu options
         selected_algo = algorithms.update(event_list)
@@ -614,17 +614,28 @@ def main():
         if begin_search:
             if selected_algorithm == "A*":
                 searching = a_star(start_cell, target_cell, searching, openSet, closeSet, path)
-            if selected_algorithm == "Dijkstra's":
-                searching = dijkstra(start_cell, target_cell, searching, pq, path)       
-            if selected_algorithm == "BFS":
+
+            elif selected_algorithm == "Dijkstra's":
+                searching = dijkstra(start_cell, target_cell, searching, pq, path)     
+
+            elif selected_algorithm == "BFS":
                 searching = bfs(start_cell, target_cell, searching, queue, path)
-            if selected_algorithm == "DFS":
+
+            elif selected_algorithm == "DFS":
                 searching = dfs(start_cell, target_cell, searching, stack, path)
 
+            #slow speed button
+            if selected_speed == "Slow":
+                time.sleep(0.2)
+            #fast speed button
+            elif selected_speed == "Fast":
+                selected_speed = "Fast"
+
         #maze button
-        if mazeButton.clicked == True and maze_set == False:
+        if mazeButton.clicked == True and maze_set == False and not begin_search:
             maze(grid)
             maze_set = True
+
         #visualise button
         if runButton.clicked == True and target_cell_set == True and start_cell_set == True and not begin_search:
             begin_search = True
@@ -638,16 +649,11 @@ def main():
             queue.enqueue(start_cell)
             pq = PriorityQueue()
             pq.insert(0,start_cell)
+        
         #clear button
         if clearButton.clicked == True:
             begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
             grid = make_grid() 
-        #slow speed button
-        if selected_speed == "Slow":
-            time.sleep(0.1)
-        #fast speed button
-        if selected_speed == "Fast":
-            selected_speed = "Fast"
 
         #draw functions  
         window.fill(INACTIVE_BUTTON)
