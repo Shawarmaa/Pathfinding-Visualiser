@@ -31,10 +31,12 @@ PATH = (205, 141, 0)
 WAITING = (102,0,102)
 
 #button colours
-COLOR_INACTIVE = (33, 37, 41)
-COLOR_ACTIVE = (8, 8, 8)
-COLOR_LIST_INACTIVE = (33, 37, 41)
-COLOR_LIST_ACTIVE = (8,8,8)
+INACTIVE_BUTTON = (33, 37, 41)
+ACTIVE_BUTTON = (8, 8, 8)
+
+
+#font
+font = pygame.font.SysFont(None, 30)
 
 window = pygame.display.set_mode((window_width,window_height))
 
@@ -153,41 +155,6 @@ class DropDown():
                     return self.active_option
         return -1
 
-class RadioButton(pygame.sprite.Sprite):
-    def __init__(self, x, y, w, h, font, text):
-        super().__init__() 
-        text_surf = font.render(text, True, (255,255,255))
-        self.button_image = pygame.Surface((w, h))
-        self.button_image.fill(COLOR_INACTIVE)
-        self.button_image.blit(text_surf, text_surf.get_rect(center = (w // 2, h // 2)))
-        self.hover_image = pygame.Surface((w, h))
-        self.hover_image.fill(COLOR_ACTIVE)
-        self.hover_image.blit(text_surf, text_surf.get_rect(center = (w // 2, h // 2)))
-        self.clicked_image = pygame.Surface((w, h))
-        self.clicked_image.blit(text_surf, text_surf.get_rect(center = (w // 2, h // 2)))
-        self.image = self.button_image
-        self.rect = pygame.Rect(x, y, w, h)
-        self.clicked = False
-        self.buttons = None
-
-    def setRadioButtons(self, buttons):
-        self.buttons = buttons
-
-    def update(self, event_list):
-        hover = self.rect.collidepoint(pygame.mouse.get_pos())
-        for event in event_list:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if hover and event.button == 1:
-                    for rb in self.buttons:
-                        rb.clicked = False
-                    self.clicked = True
-        
-        self.image = self.button_image
-        if self.clicked:
-            self.image = self.clicked_image
-        elif hover:
-            self.image = self.hover_image
-
 class Button():
     def __init__(self, font, text, width, height, pos, color, hover):
         self.original_y_pos = pos[1]
@@ -197,7 +164,6 @@ class Button():
         self.top_rect = pygame.Rect(pos,(width,height))
         self.top_color = color
         self.bottom_rect = pygame.Rect(pos,(width,height))
-        self.bottom_color = COLOR_ACTIVE
         font = font
         self.text_surf = font.render(text,True,'#FFFFFF')
         self.text_rect = self.text_surf.get_rect(center = self.top_rect.center)
@@ -452,19 +418,18 @@ def dfs(start_cell, target_cell, searching, stack, path):
     return searching
     
 def maze(grid):
-    
-    #Fill in the outside walls
+    #Fill in the outside walls, the space behind the menue will be empty and wont be searched
     create_outside_walls(grid)
 
     #Start the recursive process
-    make_maze_recursive_call(grid, columns - 1, 0, 0, rows - 1)
+    make_maze_recursive_call(grid, columns - 1, 0, 2, rows - 1)
 
 #border walls
 def create_outside_walls(grid):
-    #Create outside border walls
+    #Create top and bottom border walls
     #Create left and right walls
     for i in range(len(grid)):
-        (grid[i][0]).wall = True
+        (grid[i][2]).wall = True
         (grid[i][len(grid[i])-1]).wall = True
 
     #Create top and bottom walls
@@ -562,27 +527,25 @@ def main():
     searching = True
     begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
     grid = make_grid()
-    font = pygame.font.SysFont(None, 30)
-    selected_algorithm, selected_maze = "", ""
+    selected_algorithm, selected_speed = "", ""
     algorithms = DropDown(
-    [COLOR_INACTIVE, COLOR_ACTIVE],
-    [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE], 
+    [INACTIVE_BUTTON, ACTIVE_BUTTON],
+    [INACTIVE_BUTTON, ACTIVE_BUTTON], 
     5, 4, 120, 40,
     font," Algorithms",
     ["Dijkstra's", "A*", "BFS", "DFS"])
-    maze_menue = DropDown(
-    [COLOR_INACTIVE, COLOR_ACTIVE],
-    [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE], 
+    speed_menue = DropDown(
+    [INACTIVE_BUTTON, ACTIVE_BUTTON],
+    [INACTIVE_BUTTON, ACTIVE_BUTTON], 
     130, 4, 120, 40,
-    font," Add-on",
-    ["Maze", "Empty Grid"])
+    font," Speed",
+    ["Fast", "Slow"])
     
-    mazeButton = Button(font, "Maze", 120, 40, (255, 4),  COLOR_INACTIVE, COLOR_ACTIVE)
-    runButton = Button(font, "Visualise", 120, 40, (380, 4),  COLOR_INACTIVE, COLOR_ACTIVE)
-    clearButton = Button(font, "Clear", 120, 40, (505, 4),  COLOR_INACTIVE, COLOR_ACTIVE)
+    mazeButton = Button(font, "Maze", 120, 40, (255, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
+    runButton = Button(font, "Visualise", 120, 40, (380, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
+    clearButton = Button(font, "Clear", 120, 40, (505, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
 
 
-   
     while True:
         #FPS
         fpsClock.tick(200)
@@ -636,39 +599,16 @@ def main():
                 elif cell.target:
                     target_cell_set = cell.remove_target()
 
-                cell.make_wall()
+                cell.make_wall()#edit remove walls function
 
-            #check states
-            if event.type == pygame.KEYDOWN:
-                
-                if event.key == pygame.K_SPACE and target_cell_set == True and start_cell_set == True and not begin_search:
-                    begin_search = True
-                    searching = True
-                    start_cell.visited = True
-                    stack = Stack()
-                    stack.push(start_cell)
-                    openSet, closeSet = [], []
-                    openSet.append(start_cell)
-                    queue = Queue()
-                    queue.enqueue(start_cell)
-                    pq = PriorityQueue()
-                    pq.insert(0,start_cell)
-                
-                if event.key == pygame.K_c:
-                    begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
-                    grid = make_grid()
-        
         #updates drop down menu options
         selected_algo = algorithms.update(event_list)
         if selected_algo >= 0:
             selected_algorithm = algorithms.main = algorithms.options[selected_algo]
         
-        selected_maze_menue = maze_menue.update(event_list)
-        if selected_maze_menue >= 0:
-            selected_maze = maze_menue.main = maze_menue.options[selected_maze_menue]
-        
-        if(mazeButton.clicked == True):
-            print(1)        
+        selected_speed_menue = speed_menue.update(event_list)
+        if selected_speed_menue >= 0:
+            selected_speed = speed_menue.main = speed_menue.options[selected_speed_menue]    
 
         #check algos
         if begin_search:
@@ -681,18 +621,39 @@ def main():
             if selected_algorithm == "DFS":
                 searching = dfs(start_cell, target_cell, searching, stack, path)
 
-        else:
-            if selected_maze == "Maze" and maze_set == False:
-                maze(grid)
-                maze_set = True
-            if selected_maze == "Empty Grid" and maze_set == True:
-                begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
-                grid = make_grid()
-            
-        window.fill(COLOR_INACTIVE)
+        #maze button
+        if mazeButton.clicked == True and maze_set == False:
+            maze(grid)
+            maze_set = True
+        #visualise button
+        if runButton.clicked == True and target_cell_set == True and start_cell_set == True and not begin_search:
+            begin_search = True
+            searching = True
+            start_cell.visited = True
+            stack = Stack()
+            stack.push(start_cell)
+            openSet, closeSet = [], []
+            openSet.append(start_cell)
+            queue = Queue()
+            queue.enqueue(start_cell)
+            pq = PriorityQueue()
+            pq.insert(0,start_cell)
+        #clear button
+        if clearButton.clicked == True:
+            begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
+            grid = make_grid() 
+        #slow speed button
+        if selected_speed == "Slow":
+            time.sleep(0.1)
+        #fast speed button
+        if selected_speed == "Fast":
+            selected_speed = "Fast"
+
+        #draw functions  
+        window.fill(INACTIVE_BUTTON)
         draw_grid(grid, path)
         algorithms.draw(window)
-        maze_menue.draw(window)
+        speed_menue.draw(window)
         mazeButton.draw_button(window)
         clearButton.draw_button(window)
         runButton.draw_button(window)
