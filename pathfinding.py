@@ -32,15 +32,12 @@ WAITING = (102,0,102)
 
 #button colours
 COLOR_INACTIVE = (33, 37, 41)
-COLOR_ACTIVE = (100, 200, 255)
-COLOR_LIST_INACTIVE = (255,255,255)
-COLOR_LIST_ACTIVE = (100, 200, 255)
+COLOR_ACTIVE = (8, 8, 8)
+COLOR_LIST_INACTIVE = (33, 37, 41)
+COLOR_LIST_ACTIVE = (8,8,8)
 
 window = pygame.display.set_mode((window_width,window_height))
 
-#game buttons(left click, right click, run,clear, [?]/ESC)
-run_img = pygame.image.load("images/run.png").convert_alpha()
-clear_img = pygame.image.load("images/clear.png").convert_alpha()
 
 #classes
 class Cell:
@@ -93,7 +90,7 @@ class Cell:
 
     def draw(self, win, colour):
         
-        pygame.draw.rect(win, colour, (self.x * cell_width, self.y * cell_height, cell_width -0 , cell_height -0))# if the (-2)lines are removed it will look aesthetic in a maze
+        pygame.draw.rect(win, colour, (self.x * cell_width, self.y * cell_height, cell_width -1, cell_height -1))
 
     def set_neighbours(self, grid):
 
@@ -129,7 +126,7 @@ class DropDown():
                 rect = self.rect.copy()
                 rect.y += (i+1) * self.rect.height
                 pygame.draw.rect(surf, self.color_option[1 if i == self.active_option else 0], rect, 0)
-                msg = self.font.render(text, 1, (0, 0, 0))
+                msg = self.font.render(text, 1, (255,255,255))
                 surf.blit(msg, msg.get_rect(center = rect.center))
 
     def update(self, event_list):
@@ -156,33 +153,78 @@ class DropDown():
                     return self.active_option
         return -1
 
+class RadioButton(pygame.sprite.Sprite):
+    def __init__(self, x, y, w, h, font, text):
+        super().__init__() 
+        text_surf = font.render(text, True, (255,255,255))
+        self.button_image = pygame.Surface((w, h))
+        self.button_image.fill(COLOR_INACTIVE)
+        self.button_image.blit(text_surf, text_surf.get_rect(center = (w // 2, h // 2)))
+        self.hover_image = pygame.Surface((w, h))
+        self.hover_image.fill(COLOR_ACTIVE)
+        self.hover_image.blit(text_surf, text_surf.get_rect(center = (w // 2, h // 2)))
+        self.clicked_image = pygame.Surface((w, h))
+        self.clicked_image.blit(text_surf, text_surf.get_rect(center = (w // 2, h // 2)))
+        self.image = self.button_image
+        self.rect = pygame.Rect(x, y, w, h)
+        self.clicked = False
+        self.buttons = None
+
+    def setRadioButtons(self, buttons):
+        self.buttons = buttons
+
+    def update(self, event_list):
+        hover = self.rect.collidepoint(pygame.mouse.get_pos())
+        for event in event_list:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if hover and event.button == 1:
+                    for rb in self.buttons:
+                        rb.clicked = False
+                    self.clicked = True
+        
+        self.image = self.button_image
+        if self.clicked:
+            self.image = self.clicked_image
+        elif hover:
+            self.image = self.hover_image
+
 class Button():
-	def __init__(self, x, y, image, scale):
-		width = image.get_width()
-		height = image.get_height()
-		self.image = pygame.transform.scale(image, (int(width * scale), int(height * scale)))
-		self.rect = self.image.get_rect()
-		self.rect.topleft = (x, y)
-		self.clicked = False
+    def __init__(self, font, text, width, height, pos, color, hover):
+        self.original_y_pos = pos[1]
+        self.color = color
+        self.hover = hover
+        self.clicked = False
+        self.top_rect = pygame.Rect(pos,(width,height))
+        self.top_color = color
+        self.bottom_rect = pygame.Rect(pos,(width,height))
+        self.bottom_color = COLOR_ACTIVE
+        font = font
+        self.text_surf = font.render(text,True,'#FFFFFF')
+        self.text_rect = self.text_surf.get_rect(center = self.top_rect.center)
 
-	def draw(self, surface):
-		action = False
-		#get mouse position
-		pos = pygame.mouse.get_pos()
+    def draw_button(self, screen):
+        action = False
+        pos = pygame.mouse.get_pos()
+        top_rect = self.top_rect.copy()
 
-		#check mouseover and clicked conditions
-		if self.rect.collidepoint(pos):
-			if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
-				self.clicked = True
-				action = True
+        if top_rect.collidepoint(pos):
+            self.top_color = self.color
+            if pygame.mouse.get_pressed()[0]:
+                self.clicked = True                
 
-		if pygame.mouse.get_pressed()[0] == 0:
-			self.clicked = False
+            elif pygame.mouse.get_pressed()[0] == 0 and self.clicked == True:
+                self.clicked = False
+                action = True
+            self.top_color = self.hover
+        else:
+            self.top_color = self.color
 
-		#draw button on screen
-		surface.blit(self.image, (self.rect.x, self.rect.y))
+        top_surf = pygame.Surface(top_rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(top_surf, self.top_color, (0, 0, *top_rect.size))
+        screen.blit(top_surf, top_rect.topleft)
 
-		return action
+        screen.blit(self.text_surf, self.text_rect)
+        return action
 
 class Queue:
     def __init__(self):
@@ -242,14 +284,8 @@ class PriorityQueue:
     def size(self):
         return len(self.queue)
     
-#create button instances
-clear_button = Button(0, 50, clear_img, 1)
-run_button = Button(0, 100, run_img, 1)
-
-
 #Create grid
 def make_grid():
-
     grid = []
     for i in range(columns): 
         arr = []
@@ -526,25 +562,30 @@ def main():
     searching = True
     begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
     grid = make_grid()
-
+    font = pygame.font.SysFont(None, 30)
     selected_algorithm, selected_maze = "", ""
     algorithms = DropDown(
     [COLOR_INACTIVE, COLOR_ACTIVE],
     [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE], 
     5, 4, 120, 40,
-    pygame.font.SysFont(None, 30)," Algorithms",
+    font," Algorithms",
     ["Dijkstra's", "A*", "BFS", "DFS"])
-
     maze_menue = DropDown(
     [COLOR_INACTIVE, COLOR_ACTIVE],
     [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE], 
     130, 4, 120, 40,
-    pygame.font.SysFont(None, 30)," Add-on",
+    font," Add-on",
     ["Maze", "Empty Grid"])
     
+    mazeButton = Button(font, "Maze", 120, 40, (255, 4),  COLOR_INACTIVE, COLOR_ACTIVE)
+    runButton = Button(font, "Visualise", 120, 40, (380, 4),  COLOR_INACTIVE, COLOR_ACTIVE)
+    clearButton = Button(font, "Clear", 120, 40, (505, 4),  COLOR_INACTIVE, COLOR_ACTIVE)
+
+
    
     while True:
-        #fpsClock.tick(60)
+        #FPS
+        fpsClock.tick(200)
 
         event_list = pygame.event.get()
 
@@ -616,7 +657,7 @@ def main():
                 if event.key == pygame.K_c:
                     begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
                     grid = make_grid()
-       
+        
         #updates drop down menu options
         selected_algo = algorithms.update(event_list)
         if selected_algo >= 0:
@@ -626,6 +667,9 @@ def main():
         if selected_maze_menue >= 0:
             selected_maze = maze_menue.main = maze_menue.options[selected_maze_menue]
         
+        if(mazeButton.clicked == True):
+            print(1)        
+
         #check algos
         if begin_search:
             if selected_algorithm == "A*":
@@ -645,11 +689,13 @@ def main():
                 begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
                 grid = make_grid()
             
-
+        window.fill(COLOR_INACTIVE)
         draw_grid(grid, path)
         algorithms.draw(window)
         maze_menue.draw(window)
-
+        mazeButton.draw_button(window)
+        clearButton.draw_button(window)
+        runButton.draw_button(window)
         pygame.display.flip()
 
 main()
