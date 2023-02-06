@@ -250,7 +250,26 @@ class PriorityQueue:
     
     def size(self):
         return len(self.queue)
+
+#Set Buttons
+algorithms = DropDown(
+    [INACTIVE_BUTTON, ACTIVE_BUTTON],
+    [INACTIVE_BUTTON, ACTIVE_BUTTON], 
+    5, 4, 120, 40,
+    font," Algorithms",
+    ["Dijkstra's", "A*", "BFS", "DFS"])
     
+speed_menue = DropDown(
+    [INACTIVE_BUTTON, ACTIVE_BUTTON],
+    [INACTIVE_BUTTON, ACTIVE_BUTTON], 
+    130, 4, 120, 40,
+    font," Speed",
+    ["Fast", "Slow"])
+
+mazeButton = Button(font, "Maze", 120, 40, (255, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
+runButton = Button(font, "Visualise", 120, 40, (380, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
+clearButton = Button(font, "Clear", 120, 40, (505, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
+
 #Create grid
 def make_grid():
     grid = []
@@ -321,8 +340,6 @@ def dijkstra(start_cell, target_cell, searching, pq, path):
                         neighbour.waiting = True
                         pq.insert(distance, neighbour)
                         neighbour.prior = current_cell 
-
-  
 
     return searching
             
@@ -527,22 +544,6 @@ def main():
     begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
     grid = make_grid()
     selected_algorithm, selected_speed = "", ""
-    algorithms = DropDown(
-    [INACTIVE_BUTTON, ACTIVE_BUTTON],
-    [INACTIVE_BUTTON, ACTIVE_BUTTON], 
-    5, 4, 120, 40,
-    font," Algorithms",
-    ["Dijkstra's", "A*", "BFS", "DFS"])
-    speed_menue = DropDown(
-    [INACTIVE_BUTTON, ACTIVE_BUTTON],
-    [INACTIVE_BUTTON, ACTIVE_BUTTON], 
-    130, 4, 120, 40,
-    font," Speed",
-    ["Fast", "Slow"])
-    
-    mazeButton = Button(font, "Maze", 120, 40, (255, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
-    runButton = Button(font, "Visualise", 120, 40, (380, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
-    clearButton = Button(font, "Clear", 120, 40, (505, 4),  INACTIVE_BUTTON, ACTIVE_BUTTON)
 
     while True:
         #FPS
