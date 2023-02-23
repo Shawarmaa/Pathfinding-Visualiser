@@ -92,7 +92,6 @@ class Cell:
         self.blank = True
 
     def draw(self, win, colour):
-        
         pygame.draw.rect(win, colour, (self.x * cell_width, self.y * cell_height, cell_width -1, cell_height -1))
 
     def set_neighbours(self, grid):
@@ -340,6 +339,8 @@ def dijkstra(start_cell, target_cell, searching, pq, path):
                         neighbour.waiting = True
                         pq.insert(distance, neighbour)
                         neighbour.prior = current_cell 
+    else:
+        searching = error_msg(searching)
 
     return searching
             
