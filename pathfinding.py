@@ -539,10 +539,17 @@ def draw_grid(grid, path):
 def main():
     #resets the variables
     def clear():
-        return False, False, False, None, None, False, []
+        begin_search = False
+        start_cell_set = False
+        target_cell_set = False
+        start_cell = None
+        target_cell = None
+        maze_set = False
+        path = []
+        return begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path
 
-    searching = False
     begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
+    searching = False
     grid = make_grid()
     selected_algorithm, selected_speed = "", ""
 
@@ -610,26 +617,23 @@ def main():
         if selected_speed_menue >= 0:
             selected_speed = speed_menue.main = speed_menue.options[selected_speed_menue]    
 
-        #check algos
+        # Check the selected algorithm and execute the corresponding search function
         if begin_search:
             if selected_algorithm == "A*":
                 searching = a_star(start_cell, target_cell, searching, openSet, closeSet, path)
-
             elif selected_algorithm == "Dijkstra's":
-                searching = dijkstra(start_cell, target_cell, searching, pq, path)     
-
+                searching = dijkstra(start_cell, target_cell, searching, pq, path)
             elif selected_algorithm == "BFS":
                 searching = bfs(start_cell, target_cell, searching, queue, path)
-
             elif selected_algorithm == "DFS":
                 searching = dfs(start_cell, target_cell, searching, stack, path)
 
-            #slow speed button
+            # Slow speed button
             if selected_speed == "Slow":
                 time.sleep(0.2)
-            #fast speed button
+            # Fast speed button
             elif selected_speed == "Fast":
-                selected_speed = "Fast"
+                pass
 
         #maze button
         if mazeButton.clicked == True and maze_set == False and not begin_search:
