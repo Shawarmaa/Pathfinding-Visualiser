@@ -6,14 +6,10 @@ import math
 import time
 
 pygame.init()
-
 #settings
 window_width, window_height = 800, 800
-
 window_center = window_width/2
-
 rows, columns = 50, 50
-
 cell_width = window_width // rows
 cell_height = window_height // columns
 
@@ -27,11 +23,8 @@ BLANK = (255,255,255)
 VISITED = (172,58,74)
 PATH = (205, 141, 0)
 WAITING = (102,0,102)
-
-#button colours
 INACTIVE_BUTTON = (33, 37, 41)
 ACTIVE_BUTTON = (8, 8, 8)
-
 
 #font
 font = pygame.font.SysFont(None, 30)
@@ -279,41 +272,33 @@ def make_grid():
         grid.append(arr)
     
     set_neighbours(grid)
-
     return grid
 
 #Set Neighbours
 def set_neighbours(grid):
-
     for i in range(columns):
         for j in range(rows):
             grid[i][j].set_neighbours(grid)
 
 def get_mouse_pos():
-    
     x = pygame.mouse.get_pos()[0]
     y = pygame.mouse.get_pos()[1]
-    
     return x,y
 
 #manhattan distance
 def heuristics(a, b):
-
     return math.sqrt((a.x - b.x)**2 + abs(a.y - b.y)**2)
 
 def create_path(start_cell, path, current_cell):
-
     while current_cell.prior != start_cell: 
         path.append(current_cell.prior)
         current_cell = current_cell.prior
 
 def error_msg(searching):
-
     if searching:
             Tk().wm_withdraw()
             messagebox.showinfo("No Solution", "There is no solution")
             searching = False
-
     return searching
 
 def dijkstra(start_cell, target_cell, searching, pq, path):
@@ -507,7 +492,6 @@ def make_maze_recursive_call(grid, top, bottom, left, right):
     if bottom + 3 < y and x > left + 3:
         make_maze_recursive_call(grid, y, bottom, left, x)
 
-#setting a colour to each cell    
 def draw_grid(grid, path):
     #set menue
     for k in range(len(grid)):
