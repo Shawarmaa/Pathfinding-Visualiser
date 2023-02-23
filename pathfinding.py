@@ -39,7 +39,6 @@ font = pygame.font.SysFont(None, 30)
 window = pygame.display.set_mode((window_width,window_height))
 
 
-#classes
 class Cell:
     def __init__(self, i, j):
         self.x = i
@@ -57,7 +56,8 @@ class Cell:
 
         self.f, self.g, self.h = 0,0,0
     
-    def __gt__(self, other): #for heapfunction to operate
+    #for heapfunction to operate
+    def __gt__(self, other):
         pass
     
     def make_start(self):
@@ -443,7 +443,6 @@ def maze(grid):
 
 #border walls
 def create_outside_walls(grid):
-    #Create top and bottom border walls
     #Create left and right walls
     for i in range(len(grid)):
         (grid[i][2]).wall = True
@@ -454,7 +453,6 @@ def create_outside_walls(grid):
         (grid[0][j]).wall = True
         (grid[len(grid) - 1][j]).wall = True
 
-#recursive division
 def make_maze_recursive_call(grid, top, bottom, left, right):
     #where to divide horizontally
     start_range = bottom + 2
@@ -561,61 +559,62 @@ def main():
 
         #event handler
         for event in event_list:
-            
-            #quit window
             if event.type == pygame.QUIT: 
+                # Quit window
                 pygame.quit()
                 sys.exit()
             
-            #set nodes
-            if pygame.mouse.get_pressed()[0] and begin_search == False:
-                x, y= get_mouse_pos()
-                i = x // cell_width
-                j = y // cell_height
-                cell = grid[i][j]
+            if not begin_search:
+                if pygame.mouse.get_pressed()[0]:
+                    # Set nodes
+                    x, y = get_mouse_pos()
+                    i = x // cell_width
+                    j = y // cell_height
+                    cell = grid[i][j]
 
-                if cell.menue == True:
-                    pass
-                #set start
-                elif start_cell_set == False:
-                    start_cell = cell
-                    start_cell_set = cell.make_start()
+                    if cell.menue:
+                        pass
+                    elif not start_cell_set:
+                        # Set start
+                        start_cell = cell
+                        start_cell_set = cell.make_start()
+                    elif not target_cell_set and not cell.start:
+                        # Set target
+                        target_cell = cell
+                        target_cell_set = cell.make_target()
+                    elif not cell.start and not cell.target:
+                        # Set wall
+                        cell.make_wall()
 
-                #set target
-                elif target_cell_set == False and not cell.start: # not will return True if the expression is False
-                    target_cell = cell
-                    target_cell_set = cell.make_target()
-                    
-                #set wall
-                elif not cell.start and not cell.target:
-                    cell.make_wall()
+                elif pygame.mouse.get_pressed()[2]:
+                    # Remove nodes
+                    x, y = get_mouse_pos()
+                    i = x // cell_width
+                    j = y // cell_height
+                    cell = grid[i][j]
+                    cell.make_blank()
 
-            #remove nodes
-            elif pygame.mouse.get_pressed()[2] and begin_search == False:
-                x, y= get_mouse_pos()
-                i = x // cell_width
-                j = y // cell_height
-                cell = grid[i][j]
-                cell.make_blank()
+                    if cell.start:
+                        # Remove start
+                        start_cell_set = cell.remove_start()
+                    elif cell.target:
+                        # Remove target
+                        target_cell_set = cell.remove_target()
+                    else:
+                        # Remove wall
+                        cell.remove_wall()
 
-                #remove start
-                if cell.start:
-                    start_cell_set = cell.remove_start()
-
-                #remove target
-                elif cell.target:
-                    target_cell_set = cell.remove_target()
-
-                cell.remove_wall()
-
-        #updates drop down menu options
+       # Updates drop down menu options for algorithms
         selected_algo = algorithms.update(event_list)
         if selected_algo >= 0:
-            selected_algorithm = algorithms.main = algorithms.options[selected_algo]
+            selected_algorithm = algorithms.options[selected_algo]
+            algorithms.main = selected_algorithm
         
+        # Updates drop down menu options for speed
         selected_speed_menue = speed_menue.update(event_list)
         if selected_speed_menue >= 0:
-            selected_speed = speed_menue.main = speed_menue.options[selected_speed_menue]    
+            selected_speed = speed_menue.options[selected_speed_menue]
+            speed_menue.main = selected_speed  
 
         # Check the selected algorithm and execute the corresponding search function
         if begin_search:
@@ -635,13 +634,11 @@ def main():
             elif selected_speed == "Fast":
                 pass
 
-        #maze button
-        if mazeButton.clicked == True and maze_set == False and not begin_search:
+        if mazeButton.clicked and not maze_set and not begin_search:
             maze(grid)
             maze_set = True
 
-        #visualise button
-        if runButton.clicked == True and target_cell_set == True and start_cell_set == True and not begin_search:
+        if runButton.clicked and target_cell_set and start_cell_set and not begin_search:
             begin_search = True
             searching = True
             start_cell.visited = True
@@ -652,16 +649,15 @@ def main():
             queue = Queue()
             queue.enqueue(start_cell)
             pq = PriorityQueue()
-            pq.insert(0,start_cell)
-        
-        #clear button
-        if clearButton.clicked == True:
+            pq.insert(0, start_cell)
+
+        if clearButton.clicked:
             begin_search, start_cell_set, target_cell_set, start_cell, target_cell, maze_set, path = clear()
-            grid = make_grid() 
+            grid = make_grid()
 
         #draw functions  
         window.fill(INACTIVE_BUTTON)
-        draw_grid(grid, path)
+        draw_grid(grid,path)
         algorithms.draw(window)
         speed_menue.draw(window)
         mazeButton.draw_button(window)
