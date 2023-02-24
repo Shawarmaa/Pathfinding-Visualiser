@@ -6,6 +6,8 @@ import math
 import time
 
 pygame.init()
+pygame.display.set_caption('Pathfinding Visualiser')
+
 #settings
 window_width, window_height = 800, 800
 window_center = window_width/2
@@ -99,7 +101,6 @@ class Cell:
             self.neighbours.append(grid[self.x-1][self.y]) #left
 
 class DropDown():
-
     def __init__(self, color_menu, color_option, x, y, w, h, font, main, options):
         self.color_menu = color_menu
         self.color_option = color_option
@@ -426,7 +427,6 @@ def maze(grid):
     #Start the recursive process
     make_maze_recursive_call(grid, columns - 1, 0, 2, rows - 1)
 
-#border walls
 def create_outside_walls(grid):
     #Create left and right walls
     for i in range(len(grid)):
