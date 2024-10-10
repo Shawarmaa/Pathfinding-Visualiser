@@ -1,5 +1,3 @@
-# sdfdsafhdasfdsafsadifsadoiufdsaiofasdiofaosdiufp
-
 from tkinter import messagebox, Tk
 import pygame
 import sys
